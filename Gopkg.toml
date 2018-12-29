@@ -26,7 +26,6 @@
 
 [metadata.heroku]
   root-package = "git.heroku.com/pg1-go-work"
-  go-version = "go1.11.2"
   ensure = "false"
 
 [prune]
