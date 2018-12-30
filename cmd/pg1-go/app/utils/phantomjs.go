@@ -75,7 +75,7 @@ func (p *Process) Open() error {
 		phantomPath := ""
 		log.Printf("==debug== thisFileName: %v\n", thisFilename)
 		if ok {
-			phantomPath = path.Join(path.Dir(thisFilename), "../phantomjs")
+			phantomPath = path.Join(path.Dir(thisFilename), "phantomjs")
 			log.Printf("==debug== phantomPath: %v\n", phantomPath)
 		}
 		// Generate temporary path to run script from.
