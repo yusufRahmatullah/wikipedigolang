@@ -7,13 +7,10 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
-	"runtime"
 	"time"
 )
 
@@ -71,13 +68,6 @@ func (p *Process) Path() string {
 // Open start the phantomjs process with the shim script.
 func (p *Process) Open() error {
 	if err := func() error {
-		_, thisFilename, _, ok := runtime.Caller(1)
-		phantomPath := ""
-		log.Printf("==debug== thisFileName: %v\n", thisFilename)
-		if ok {
-			phantomPath = path.Join(path.Dir(thisFilename), "phantomjs")
-			log.Printf("==debug== phantomPath: %v\n", phantomPath)
-		}
 		// Generate temporary path to run script from.
 		path, err := ioutil.TempDir("", "phantomjs-")
 		if err != nil {
@@ -96,7 +86,6 @@ func (p *Process) Open() error {
 		cmd.Env = []string{
 			fmt.Sprintf("PORT=%d", p.Port),
 			"QT_QPA_PLATFORM=offscreen",
-			fmt.Sprintf("PATH=$PATH:%v", phantomPath),
 		}
 		cmd.Stdout = p.Stdout
 		cmd.Stderr = p.Stderr
