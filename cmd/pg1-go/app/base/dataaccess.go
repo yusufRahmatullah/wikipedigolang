@@ -26,14 +26,14 @@ func init() {
 }
 
 // NewDataAccess return new DataAccess instance with instantiated Client
-func NewDataAccess() DataAccess {
+func NewDataAccess() *DataAccess {
 	dbClient, err := mgo.Dial(mongodbURL)
 	utils.HandleError(
 		err,
 		fmt.Sprintf("Failed to open MongoDB at URL: %v\n", mongodbURL),
 		func() { dbClient.Close() },
 	)
-	return DataAccess{Client: dbClient}
+	return &DataAccess{Client: dbClient}
 }
 
 // GetCollection returns MongoDB collection from DataAccess

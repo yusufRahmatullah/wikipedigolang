@@ -22,6 +22,6 @@ func (model *Model) InitBase() {
 }
 
 // NewModel returns new Model instance
-func NewModel() Model {
-	return Model{}
+func NewModel() *Model {
+	return &Model{}
 }

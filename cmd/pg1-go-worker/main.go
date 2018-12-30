@@ -6,20 +6,21 @@ import (
 	"strconv"
 	"time"
 
+	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/igprofile"
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/utils"
 
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/jobqueue"
 )
 
 var (
-	jobAssigner jobqueue.JobAssigner
+	jobAssigner *jobqueue.JobAssigner
 )
 
 func init() {
 	// initialilze JobAssigner
 	jobAssigner = jobqueue.NewJobAssigner()
-	baseProcessor := jobqueue.NewBaseProcessor()
-	jobAssigner.Register(baseProcessor)
+	singleAccountJob := igprofile.NewSingleAccountJob()
+	jobAssigner.Register(singleAccountJob)
 }
 
 func main() {
@@ -35,19 +36,22 @@ func main() {
 			waitTime = 5
 		},
 	)
-	log.Println("==debug== [Consumer] running")
+
+	err = utils.DefaultProcess.Open()
+	defer utils.DefaultProcess.Close()
+	if err != nil {
+		log.Println("==debug== failed open phantomjs process")
+		panic(err)
+	}
+
 	for true {
-		log.Println("==debug== [Consumer] retrieving queue")
 		jobQueues = jobqueue.GetAll()
 		if len(jobQueues) == 0 {
-			log.Printf("==debug== [Consumer] Queue empty, waiting for %v seconds\n", waitTime)
 			time.Sleep(time.Duration(waitTime) * time.Second)
 		} else {
-			log.Printf("==debug== [Consumer] Processing %v queues\n", len(jobQueues))
 			for len(jobQueues) > 0 {
 				jobQueue, jobQueues = jobQueues[0], jobQueues[1:]
-				suc := jobAssigner.ProcessJobQueue(jobQueue)
-				log.Printf("==debug== [Consumer] ProcessJob: %v\n", suc)
+				jobAssigner.ProcessJobQueue(&jobQueue)
 			}
 		}
 	}

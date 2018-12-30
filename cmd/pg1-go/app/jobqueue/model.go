@@ -33,14 +33,14 @@ func init() {
 // JobQueue holds information about job function name
 // and its params
 type JobQueue struct {
-	ID     bson.ObjectId `json:"id" bson:"_id,omitempty"`
-	Name   string        `json:"name" bson:"name"`
-	Params interface{}   `json:"params" bson:"params"`
+	ID     bson.ObjectId          `json:"id" bson:"_id,omitempty"`
+	Name   string                 `json:"name" bson:"name"`
+	Params map[string]interface{} `json:"params" bson:"params"`
 }
 
 // NewJobQueue return new JobQueue instance
-func NewJobQueue(name string, params interface{}) JobQueue {
-	return JobQueue{Name: name, Params: params}
+func NewJobQueue(name string, params map[string]interface{}) *JobQueue {
+	return &JobQueue{Name: name, Params: params}
 }
 
 // Save writes JobQueue instance into database

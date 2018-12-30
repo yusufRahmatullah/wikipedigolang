@@ -34,8 +34,8 @@ type User struct {
 }
 
 // NewUser returns new User instance
-func NewUser(name string, phone string) User {
-	return User{Name: name, Phone: phone}
+func NewUser(name string, phone string) *User {
+	return &User{Name: name, Phone: phone}
 }
 
 // Save writes User instance to database

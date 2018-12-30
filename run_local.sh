@@ -1,2 +1,2 @@
-go install ./cmd/...
+go install ./cmd/... && 
 heroku local -f Procfile.local
