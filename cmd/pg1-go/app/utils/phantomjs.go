@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -72,8 +73,10 @@ func (p *Process) Open() error {
 	if err := func() error {
 		_, thisFilename, _, ok := runtime.Caller(1)
 		phantomPath := ""
+		log.Printf("==debug== thisFileName: %v\n", thisFilename)
 		if ok {
 			phantomPath = path.Join(path.Dir(thisFilename), "../phantomjs")
+			log.Printf("==debug== phantomPath: %v\n", phantomPath)
 		}
 		// Generate temporary path to run script from.
 		path, err := ioutil.TempDir("", "phantomjs-")
