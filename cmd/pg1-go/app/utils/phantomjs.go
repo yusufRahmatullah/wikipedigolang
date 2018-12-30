@@ -85,7 +85,6 @@ func (p *Process) Open() error {
 		cmd := exec.Command(p.BinPath, scriptPath)
 		cmd.Env = []string{
 			fmt.Sprintf("PORT=%d", p.Port),
-			"QT_QPA_PLATFORM=offscreen",
 		}
 		cmd.Stdout = p.Stdout
 		cmd.Stderr = p.Stderr
