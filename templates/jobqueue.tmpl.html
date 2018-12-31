@@ -1,0 +1,44 @@
+<html>
+  {{template "header.tmpl.html"}}
+<body>
+    <center>
+        <label for="jobName">Job Name: </label>
+        <input type="text" id="jobName" name="jobName" value="SingleAccountJob">
+        <br />
+        <label for="igId">IG ID: </label>
+        <input type="text" id="igId" name="igId">
+        <br/>
+        <button type="submit" onclick="post();">Post Job</button>
+    </center>
+<script>
+    function post() {
+        var jobNameInput = document.querySelector("#jobName");
+        var jobName = jobNameInput.value;
+        var igIdInput = document.querySelector("#igId");
+        var igId = igIdInput.value;
+        var data = {
+            "name": jobName,
+            "params": {
+                "ig_id": igId,
+            }
+        }
+        fetch('/job_queue', {
+            method: "POST",
+            body: JSON.stringify(data),
+            headers: {
+                "Content-Type": "application/json",
+            },
+            credentials: "same-origin"
+        })
+        .then(resp => resp.json())
+        .then(json => {
+            if (json.status === "OK") {
+                igIdInput.value = "";
+            } else if (json.status == "error") {
+                alert(json.message);
+            }
+        })
+    }
+</script>
+</body>
+</html>

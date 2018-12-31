@@ -1,23 +1,25 @@
 package main
 
 import (
-	"log"
 	"net/http"
 	"os"
+
+	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/logger"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/heroku/x/hmetrics/onload"
 
+	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/igprofile"
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/jobqueue"
-	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/repeat"
-	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/user"
 )
+
+var mainLogger = logger.NewLogger("PG1-Go::Main", false, true)
 
 func main() {
 	port := os.Getenv("PORT")
 
 	if port == "" {
-		log.Fatal("$PORT must be set")
+		mainLogger.Error("$PORT must be set")
 	}
 
 	router := gin.New()
@@ -29,9 +31,9 @@ func main() {
 		c.HTML(http.StatusOK, "index.tmpl.html", nil)
 	})
 
-	repeat.DefineRoutes(router)
-	user.DefineRoutes(router, "")
-	jobqueue.DefineRoutes(router, "")
+	jobqueue.DefineAPIRoutes(router, "")
+	jobqueue.DefineViewRoutes(router, "")
+	igprofile.DefineAPIRoutes(router, "")
 
 	router.Run(":" + port)
 }

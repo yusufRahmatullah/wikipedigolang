@@ -1,6 +1,12 @@
 package jobqueue
 
-import "log"
+import (
+	"fmt"
+
+	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/logger"
+)
+
+var assignerLogger = logger.NewLogger("JobAssigner", true, true)
 
 // JobAssigner has objective to assign the JobQueue
 // to corresponding Processor
@@ -23,23 +29,18 @@ func (ja *JobAssigner) Register(proc Job) {
 // Returns true if JobQueue processed succesfully
 func (ja *JobAssigner) ProcessJobQueue(jobQueue *JobQueue) bool {
 	name := jobQueue.Name
+	params := jobQueue.Params
 	proc, exist := ja.ProcessorMap[name]
 	if exist {
 		suc := proc.Process(jobQueue)
 		if suc {
-			return DeleteJobQueue(*jobQueue)
+			assignerLogger.Info(fmt.Sprintf("Success to process %v", name))
+			return DeleteJobQueue(jobQueue)
 		}
+		assignerLogger.Info(fmt.Sprintf("Failed to process %v with params: %v", name, params))
+
 	}
-	for k := range ja.ProcessorMap {
-		log.Printf("%v\n", k)
-	}
-	suc := PostponeJobQueue(*jobQueue)
-	if !suc {
-		log.Printf(
-			"Failed to postpone job queue: {Name: %v, Params: %v}\n",
-			jobQueue.Name,
-			jobQueue.Params,
-		)
-	}
+	assignerLogger.Info(fmt.Sprintf("%v not exist", name))
+	PostponeJobQueue(jobQueue)
 	return false
 }

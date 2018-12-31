@@ -2,9 +2,10 @@ package igprofile
 
 import (
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
+
+	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/logger"
 
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/utils"
 
@@ -13,6 +14,7 @@ import (
 
 var (
 	commaVanisher = strings.NewReplacer(",", "")
+	sajLogger     = logger.NewLogger("SingleAccountJob", true, true)
 )
 
 // SingleAccountJob is the job for crawling an account
@@ -33,41 +35,66 @@ func (job *SingleAccountJob) Name() string {
 // Process executes job queue with the given params
 // Returns true if process success
 func (job *SingleAccountJob) Process(jq *jobqueue.JobQueue) bool {
-	log.Println("==debug== run process")
+	sajLogger.Debug("run process")
 	params := (*jq).Params
 	igID, ok := params["ig_id"]
 	if ok {
 		page, err := utils.CreateWebPage()
 		if err == nil {
 			defer page.Close()
-			log.Println("==debug== openning url")
+			sajLogger.Debug("openning url")
 			err := page.Open(fmt.Sprintf("https://www.instagram.com/%v", igID))
 			if err == nil {
-				log.Println("==debug== url openned")
+				sajLogger.Debug("url opened")
 				info, err := page.Evaluate(`function() {
 					var folNode = document.querySelector("a[href$='followed_by_list']>span");
+					var folinNode = document.querySelector("a[href$='follows_list']>span");
+					var postsNode = document.querySelector("a[href$='profile_posts']>span");
 					var fol = folNode.getAttribute("title");
-					return { followers: fol };
+					var folin = folinNode.innerHTML;
+					var posts = postsNode.innerHTML;
+					var name = document.title.split("(")[0].trim();
+					return { followers: fol, following: folin, posts: posts, name: name };
 				}`)
 				if err == nil {
-					log.Printf("==debug== info: %v\n", info)
-					data := info.(map[string]interface{})
-					followers := commaVanisher.Replace(data["followers"].(string))
-					log.Printf("==debug== followers text: %v\n", data["followers"])
-					nbf, err := strconv.Atoi(followers)
-					if err != nil {
-						log.Printf("==debug== failed to convert str\n")
+					if info == nil {
+						sajLogger.Fatal(fmt.Sprintf("info is nil, IG ID: %v", igID))
 						return false
 					}
-					log.Printf("==debug== followers number: %v\n", nbf)
-					return true
+					data := info.(map[string]interface{})
+					followers := commaVanisher.Replace(data["followers"].(string))
+					following := commaVanisher.Replace(data["following"].(string))
+					posts := commaVanisher.Replace(data["posts"].(string))
+					name := data["name"].(string)
+					sajLogger.Debug(fmt.Sprintf("name: %v, followers: %v, following: %v, posts: %v", name, followers, following, posts))
+					nbf, err := strconv.Atoi(followers)
+					if err != nil {
+						sajLogger.Fatal(fmt.Sprintf("Failed to convert follower text to int: %v", followers))
+						return false
+					}
+					sajLogger.Debug(fmt.Sprintf("Followers: %v", nbf))
+
+					nbfin, err := strconv.Atoi(following)
+					if err != nil {
+						sajLogger.Fatal(fmt.Sprintf("Failed to convert following text: %v", following))
+						return false
+					}
+					sajLogger.Debug(fmt.Sprintf("Following: %v", nbfin))
+
+					np, err := strconv.Atoi(posts)
+					if err != nil {
+						sajLogger.Fatal(fmt.Sprintf("Failed to convert posts text: %v", posts))
+						return false
+					}
+					sajLogger.Debug(fmt.Sprintf("Posts: %v", np))
+					return Save(NewIgProfile(igID.(string), name, nbf, nbfin, np))
 				}
-				log.Println("==debug== failed to execute JS")
+				sajLogger.Fatal(fmt.Sprintf("Failed to execute JS on IG ID: %v", igID))
 			} else {
-				log.Println("==debug== failed to open url")
+				sajLogger.Fatal(fmt.Sprintf("Failed to open url on IG ID: %v", igID))
 			}
 		} else {
-			log.Println("==debug== create page failed")
+			sajLogger.Fatal("Failed to create page")
 		}
 	}
 	return false

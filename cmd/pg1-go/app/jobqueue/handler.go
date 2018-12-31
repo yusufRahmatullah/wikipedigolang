@@ -14,10 +14,10 @@ func newJobQueueHandler(c *gin.Context) {
 	var data interface{}
 	c.BindJSON(&jq)
 	if jq.Name == "" {
-		data = base.ErrorJSON("name is required", gin.H{})
+		data = base.ErrorJSON("name is required", nil)
 		c.JSON(http.StatusBadRequest, data)
 	} else {
-		suc := jq.Save()
+		suc := Save(&jq)
 		var msg string
 		var status int
 		if suc {
@@ -27,7 +27,12 @@ func newJobQueueHandler(c *gin.Context) {
 			msg = "Failed to create JobQueue"
 			status = http.StatusOK
 		}
-		data := base.StandardJSON(msg, gin.H{})
+		data := base.StandardJSON(msg, nil)
 		c.JSON(status, data)
 	}
+}
+
+// jobQueueIndexView render JobQueue form
+func jobQueueIndexView(c *gin.Context) {
+	c.HTML(http.StatusOK, "jobqueue.tmpl.html", nil)
 }

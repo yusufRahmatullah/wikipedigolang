@@ -1,10 +1,11 @@
 package main
 
 import (
-	"log"
 	"os"
 	"strconv"
 	"time"
+
+	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/logger"
 
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/igprofile"
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/utils"
@@ -14,6 +15,7 @@ import (
 
 var (
 	jobAssigner *jobqueue.JobAssigner
+	mainLogger  = logger.NewLogger("PG1-Go-Worker", false, true)
 )
 
 func init() {
@@ -28,20 +30,14 @@ func main() {
 	var jobQueue jobqueue.JobQueue
 	waitTimeStr := os.Getenv("WAIT_TIME")
 	waitTime, err := strconv.Atoi(waitTimeStr)
-
-	utils.HandleError(
-		err,
-		"$WAIT_TIME not found. Use default instead",
-		func() {
-			waitTime = 5
-		},
-	)
-
+	if err != nil {
+		mainLogger.Warning("$WAIT_TIME not found, use default")
+		waitTime = 5
+	}
 	err = utils.DefaultProcess.Open()
 	defer utils.DefaultProcess.Close()
 	if err != nil {
-		log.Println("==debug== failed open phantomjs process")
-		panic(err)
+		mainLogger.Error("Failed to open phantomjs process")
 	}
 
 	for true {

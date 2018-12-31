@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 
-	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/utils"
 	"github.com/globalsign/mgo"
 )
 
@@ -28,11 +27,9 @@ func init() {
 // NewDataAccess return new DataAccess instance with instantiated Client
 func NewDataAccess() *DataAccess {
 	dbClient, err := mgo.Dial(mongodbURL)
-	utils.HandleError(
-		err,
-		fmt.Sprintf("Failed to open MongoDB at URL: %v\n", mongodbURL),
-		func() { dbClient.Close() },
-	)
+	if err != nil {
+		log.Panic(fmt.Sprintf("Failed to open MongoDB at URL: %v\n", mongodbURL))
+	}
 	return &DataAccess{Client: dbClient}
 }
 

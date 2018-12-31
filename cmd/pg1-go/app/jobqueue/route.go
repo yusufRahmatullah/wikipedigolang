@@ -2,7 +2,12 @@ package jobqueue
 
 import "github.com/gin-gonic/gin"
 
-// DefineRoutes defines routes for producer
-func DefineRoutes(router *gin.Engine, prefix string) {
+// DefineAPIRoutes defines routes for JobQueue
+func DefineAPIRoutes(router *gin.Engine, prefix string) {
 	router.POST(prefix+"/job_queue", newJobQueueHandler)
+}
+
+// DefineViewRoutes defines routes for JobQueue that contains view
+func DefineViewRoutes(router *gin.Engine, prefix string) {
+	router.GET(prefix+"/job_queue", jobQueueIndexView)
 }

@@ -1,11 +1,13 @@
 package jobqueue
 
 import (
+	"fmt"
 	"os"
 	"strconv"
 
+	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/logger"
+
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/base"
-	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/utils"
 	"github.com/globalsign/mgo/bson"
 )
 
@@ -14,20 +16,18 @@ const postponedJobCol = "postponed_job_queue"
 
 var (
 	// JobLimit is maximum Job to be processed and queried
-	JobLimit int
+	JobLimit    int
+	modelLogger = logger.NewLogger("JobQueue", true, true)
 )
 
 func init() {
 	var err error
 	jobStr := os.Getenv("JOB_LIMIT")
 	JobLimit, err = strconv.Atoi(jobStr)
-	utils.HandleError(
-		err,
-		"$JOB_LIMIT not found. using default",
-		func() {
-			JobLimit = 10
-		},
-	)
+	if err != nil {
+		modelLogger.Warning("$JOB_LIMIT not found, using default")
+		JobLimit = 10
+	}
 }
 
 // JobQueue holds information about job function name
@@ -45,13 +45,17 @@ func NewJobQueue(name string, params map[string]interface{}) *JobQueue {
 
 // Save writes JobQueue instance into database
 // returns true if save success
-func (jq *JobQueue) Save() bool {
+func Save(jq *JobQueue) bool {
 	dataAccess := base.NewDataAccess()
 	defer dataAccess.Close()
 	col := dataAccess.GetCollection(jobQueueCol)
 	err := col.Insert(&jq)
-	utils.HandleError(err, "", nil)
-	return err == nil
+	if err == nil {
+		modelLogger.Info(fmt.Sprintf("Success to create JobQueue with name: %v", jq.Name))
+		return true
+	}
+	modelLogger.Info(fmt.Sprintf("Failed to create JobQueue with name: %v", jq.Name))
+	return false
 }
 
 // GetAll returns All JobQueue in database with
@@ -62,41 +66,45 @@ func GetAll() []JobQueue {
 	col := dataAccess.GetCollection(jobQueueCol)
 	var jobQueues []JobQueue
 	err := col.Find(nil).Limit(JobLimit).All(&jobQueues)
-	utils.HandleError(err, "", nil)
+	if err == nil {
+		modelLogger.Debug("Success to get all JobQueues")
+	} else {
+		modelLogger.Fatal("Failed to get all JobQueue")
+	}
 	return jobQueues
 }
 
 // DeleteJobQueue remove JobQueue instance from database
 // Returns true if remove is successful
-func DeleteJobQueue(jobQueue JobQueue) bool {
+func DeleteJobQueue(jobQueue *JobQueue) bool {
 	dataAccess := base.NewDataAccess()
 	defer dataAccess.Close()
 	col := dataAccess.GetCollection(jobQueueCol)
 	err := col.Remove(bson.M{"_id": jobQueue.ID})
-	utils.HandleError(err, "", nil)
-	return err == nil
-}
-
-// DeleteJobQueueID remove JobQueue instance from database
-// defined by its ID. Returns true if remove is successful
-func DeleteJobQueueID(id bson.ObjectId) bool {
-	dataAccess := base.NewDataAccess()
-	defer dataAccess.Close()
-	col := dataAccess.GetCollection(jobQueueCol)
-	err := col.RemoveId(id)
-	utils.HandleError(err, "", nil)
-	return err == nil
+	if err == nil {
+		modelLogger.Info(fmt.Sprintf("Success to delete JobQueue with name: %v", jobQueue.Name))
+		return true
+	}
+	modelLogger.Info(fmt.Sprintf("Failed to delete JobQueue with name: %v", jobQueue.Name))
+	return false
 }
 
 // PostponeJobQueue move the JobQueue to canceled job collections
 // Returns true if postponing JobQueue is successful
-func PostponeJobQueue(jobQueue JobQueue) bool {
+func PostponeJobQueue(jobQueue *JobQueue) bool {
 	dataAccess := base.NewDataAccess()
 	defer dataAccess.Close()
 	col := dataAccess.GetCollection(postponedJobCol)
-	DeleteJobQueue(jobQueue)
+	suc := DeleteJobQueue(jobQueue)
+	if !suc {
+		return suc
+	}
 	jobQueue.ID = ""
 	err := col.Insert(jobQueue)
-	utils.HandleError(err, "", nil)
-	return err == nil
+	if err == nil {
+		modelLogger.Info(fmt.Sprintf("Success to postpone JobQueue with name: %v", jobQueue.Name))
+		return true
+	}
+	modelLogger.Info(fmt.Sprintf("Failed to postpone JobQueue with name: %v", jobQueue.Name))
+	return false
 }
