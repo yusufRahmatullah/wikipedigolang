@@ -13,3 +13,8 @@ func DefineAPIRoutes(router *gin.Engine, prefix string) {
 	router.PATCH(prefix+"/igprofile/:ig_id", modifyIgProfileHandler)
 	router.DELETE(prefix+"/igprofile/:ig_id", deleteIgProfileHandler)
 }
+
+// DefineViewRoutes defines routes for IgProfile that contains view
+func DefineViewRoutes(router *gin.Engine, prefix string) {
+	router.GET(prefix+"/igprofiles", igProfilesView)
+}

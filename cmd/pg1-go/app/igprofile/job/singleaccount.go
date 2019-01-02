@@ -80,7 +80,7 @@ func processData(igID string, data map[string]interface{}) bool {
 	igpBuilder = igpBuilder.SetIGID(igID).SetName(name)
 	igpBuilder = igpBuilder.SetFollowers(nbf).SetFollowing(nbfin)
 	igp := igpBuilder.SetPosts(np).SetPpURL(ppURL).Build()
-	return igprofile.Save(igp)
+	return igprofile.SaveOrUpdate(igp)
 }
 
 func crawlIgID(igID string) bool {

@@ -41,30 +41,26 @@ func newIgProfileHandler(c *gin.Context) {
 	}
 }
 
+func generateSortOrder(c *gin.Context) string {
+	sort := c.Query("sort")
+	orderStr := c.Query("order")
+	order := convertIntOrDefault(orderStr, -1)
+	if sort == "" {
+		sort = "_id"
+	}
+	if order == -1 {
+		sort = "-" + sort
+	}
+	return sort
+}
+
 func getAllIgProfileHandler(c *gin.Context) {
 	offsetStr := c.Query("offset")
 	limitStr := c.Query("limit")
-	var offset, limit int
-	var err error
-	if offsetStr == "" {
-		offset = defaultOffset
-	} else {
-		offset, err = strconv.Atoi(offsetStr)
-		if err != nil {
-			handlerLogger.Warning(fmt.Sprintf("Failed to convert offset text: %v", offsetStr))
-			offset = defaultOffset
-		}
-	}
-	if limitStr == "" {
-		limit = defaultLimit
-	} else {
-		limit, err = strconv.Atoi(limitStr)
-		if err != nil {
-			handlerLogger.Warning(fmt.Sprintf("Failed to convert limit text: %v", limitStr))
-			limit = defaultLimit
-		}
-	}
-	igps := GetAll(offset, limit)
+	offset := convertIntOrDefault(offsetStr, defaultOffset)
+	limit := convertIntOrDefault(limitStr, defaultLimit)
+	sort := generateSortOrder(c)
+	igps := GetAll(offset, limit, sort)
 	data := base.StandardJSON("", igps)
 	c.JSON(http.StatusOK, data)
 }
@@ -81,30 +77,13 @@ func getIgProfileHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, data)
 }
 
-func generateChanges(igp *IgProfile) *gin.H {
-	changes := gin.H{}
-	if igp.Name != "" {
-		changes["name"] = igp.Name
-	}
-	if igp.Followers > 0 {
-		changes["followers"] = igp.Followers
-	}
-	if igp.Following > 0 {
-		changes["following"] = igp.Following
-	}
-	if igp.Posts > 0 {
-		changes["posts"] = igp.Posts
-	}
-	return &changes
-}
-
 func modifyIgProfileHandler(c *gin.Context) {
 	var igp IgProfile
 	c.BindJSON(&igp)
 	igID := c.Param("ig_id")
 	changes := generateChanges(&igp)
 
-	suc := Update(igID, *changes)
+	suc := Update(igID, changes)
 	var msg string
 	var status int
 	if suc {
@@ -118,31 +97,26 @@ func modifyIgProfileHandler(c *gin.Context) {
 	c.JSON(status, data)
 }
 
+func convertIntOrDefault(text string, def int) int {
+	if text == "" {
+		return def
+	}
+	num, err := strconv.Atoi(text)
+	if err != nil {
+		handlerLogger.Warning(fmt.Sprintf("Failed to convert text to int: %v", text))
+		return def
+	}
+	return num
+}
+
 func findIgProfileHandler(c *gin.Context) {
 	offsetStr := c.Query("offset")
 	limitStr := c.Query("limit")
 	query := c.Query("query")
-	var offset, limit int
-	var err error
-	if offsetStr == "" {
-		offset = defaultOffset
-	} else {
-		offset, err = strconv.Atoi(offsetStr)
-		if err != nil {
-			handlerLogger.Warning(fmt.Sprintf("Failed to convert offset text: %v", offsetStr))
-			offset = defaultOffset
-		}
-	}
-	if limitStr == "" {
-		limit = defaultLimit
-	} else {
-		limit, err = strconv.Atoi(limitStr)
-		if err != nil {
-			handlerLogger.Warning(fmt.Sprintf("Failed to convert offset text: %v", limitStr))
-			limit = defaultLimit
-		}
-	}
-	igps := FindIgProfile(query, offset, limit)
+	offset := convertIntOrDefault(offsetStr, defaultOffset)
+	limit := convertIntOrDefault(limitStr, defaultLimit)
+	sort := generateSortOrder(c)
+	igps := FindIgProfile(query, offset, limit, sort)
 	data := base.StandardJSON("", igps)
 	c.JSON(http.StatusOK, data)
 }
@@ -158,4 +132,38 @@ func deleteIgProfileHandler(c *gin.Context) {
 	}
 	data := base.StandardJSON(msg, nil)
 	c.JSON(http.StatusOK, data)
+}
+
+/////////////////////////////////
+// IgProfile Views
+/////////////////////////////////
+
+func igProfilesView(c *gin.Context) {
+	pageStr := c.Query("page")
+	limitStr := c.Query("limit")
+	page := convertIntOrDefault(pageStr, 1)
+	limit := convertIntOrDefault(limitStr, defaultLimit)
+	offset := (page - 1) * limit
+	sort := generateSortOrder(c)
+	igps := GetAll(offset, limit, sort)
+	hasPrev := true
+	if page == 1 {
+		hasPrev = false
+	}
+	hasNext := true
+	if len(igps) < limit {
+		hasNext = false
+	}
+	data := struct {
+		Profiles []IgProfile
+		HasPrev  bool
+		HasNext  bool
+		Page     int
+	}{
+		Profiles: igps,
+		HasPrev:  hasPrev,
+		HasNext:  hasNext,
+		Page:     page,
+	}
+	c.HTML(http.StatusOK, "igprofiles.tmpl.html", data)
 }

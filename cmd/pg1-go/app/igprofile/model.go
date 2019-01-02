@@ -6,6 +6,7 @@ import (
 
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/base"
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/logger"
+	"github.com/gin-gonic/gin"
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
 )
@@ -52,24 +53,18 @@ func (model *IgProfile) initTime() {
 	model.ModifiedAt = time.Now()
 }
 
-// NewIgProfile returns new IgProfile instance
-// Requires IG Id, name, number of followers, following, and posts
-func NewIgProfile(igID, name string, followers, following, posts int, ppURL string) *IgProfile {
-	return &IgProfile{
-		IGID:      igID,
-		Name:      name,
-		Followers: followers,
-		Following: following,
-		Posts:     posts,
-		PpURL:     ppURL,
-	}
-}
-
 // Save writes IgProfile instance to database
 // returns true if success
 func Save(igp *IgProfile) bool {
 	dataAccess := base.NewDataAccess()
 	defer dataAccess.Close()
+	delCol := dataAccess.GetCollection(deletedIDCol)
+	var exsIgp IgProfile
+	delCol.Find(bson.M{"ig_id": igp.IGID}).One(&exsIgp)
+	if exsIgp.IGID != "" {
+		modelLogger.Info(fmt.Sprintf("Failed to create IgProfile because IG ID: %v was banned", igp.IGID))
+		return false
+	}
 	col := dataAccess.GetCollection(igProfileCol)
 	igp.initTime()
 	err := col.Insert(igp)
@@ -79,7 +74,6 @@ func Save(igp *IgProfile) bool {
 	}
 	modelLogger.Info(fmt.Sprintf("Failed to create IgProfile with IG ID: %v", igp.IGID))
 	return false
-
 }
 
 // Update modify IgProfile instance in database
@@ -98,17 +92,50 @@ func Update(igID string, changes map[string]interface{}) bool {
 	}
 	modelLogger.Info(fmt.Sprintf("Failed to update IgProfile with IG ID: %v", igID))
 	return false
+}
 
+func generateChanges(igp *IgProfile) map[string]interface{} {
+	changes := gin.H{}
+	if igp.Name != "" {
+		changes["name"] = igp.Name
+	}
+	if igp.Followers > 0 {
+		changes["followers"] = igp.Followers
+	}
+	if igp.Following > 0 {
+		changes["following"] = igp.Following
+	}
+	if igp.Posts > 0 {
+		changes["posts"] = igp.Posts
+	}
+	if igp.PpURL != "" {
+		changes["pp_url"] = igp.PpURL
+	}
+	return changes
+}
+
+// SaveOrUpdate writes IgProfile instance to database
+// if IgProfile doesn't exists or update existing IgProfile
+// with new data. Returns true if success
+func SaveOrUpdate(igp *IgProfile) bool {
+	strdIgp := GetIgProfile(igp.IGID)
+	if strdIgp == nil {
+		return Save(igp)
+	}
+	return Update(igp.IGID, generateChanges(igp))
 }
 
 // GetAll returns All IgProfile in database
 // Require offset and limit number for pagination
-func GetAll(offset, limit int) []IgProfile {
+func GetAll(offset, limit int, sortBy ...string) []IgProfile {
 	dataAccess := base.NewDataAccess()
 	defer dataAccess.Close()
 	col := dataAccess.GetCollection(igProfileCol)
 	var igps []IgProfile
-	err := col.Find(nil).Skip(offset).Limit(limit).All(&igps)
+	if len(sortBy) == 0 {
+		sortBy = []string{"_id"}
+	}
+	err := col.Find(nil).Sort(sortBy...).Skip(offset).Limit(limit).All(&igps)
 	if err == nil {
 		modelLogger.Debug("Success to get all IgProfile")
 	} else {
@@ -134,17 +161,20 @@ func GetIgProfile(igID string) *IgProfile {
 
 // FindIgProfile find IgProfiles in database by its IGID or name
 // Require offset and limit number for pagination
-func FindIgProfile(query string, offset, limit int) []IgProfile {
+func FindIgProfile(query string, offset, limit int, sortBy ...string) []IgProfile {
 	dataAccess := base.NewDataAccess()
 	defer dataAccess.Close()
 	col := dataAccess.GetCollection(igProfileCol)
 	var igps []IgProfile
+	if len(sortBy) == 0 {
+		sortBy = []string{"-modified_at"}
+	}
 	err := col.Find(bson.M{
 		"$or": []bson.M{
 			bson.M{"ig_id": bson.M{"$regex": query, "$options": "i"}},
 			bson.M{"name": bson.M{"$regex": query, "$options": "i"}},
 		},
-	}).Skip(offset).Limit(limit).All(&igps)
+	}).Sort(sortBy...).Skip(offset).Limit(limit).All(&igps)
 	if err == nil {
 		modelLogger.Debug(fmt.Sprintf("Success to find IgProfile with query: %v", query))
 	} else {
