@@ -81,10 +81,7 @@ func getIgProfileHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, data)
 }
 
-func modifyIgProfileHandler(c *gin.Context) {
-	var igp IgProfile
-	c.BindJSON(&igp)
-	igID := c.Param("ig_id")
+func generateChanges(igp *IgProfile) *gin.H {
 	changes := gin.H{}
 	if igp.Name != "" {
 		changes["name"] = igp.Name
@@ -98,8 +95,16 @@ func modifyIgProfileHandler(c *gin.Context) {
 	if igp.Posts > 0 {
 		changes["posts"] = igp.Posts
 	}
+	return &changes
+}
 
-	suc := Update(igID, changes)
+func modifyIgProfileHandler(c *gin.Context) {
+	var igp IgProfile
+	c.BindJSON(&igp)
+	igID := c.Param("ig_id")
+	changes := generateChanges(&igp)
+
+	suc := Update(igID, *changes)
 	var msg string
 	var status int
 	if suc {

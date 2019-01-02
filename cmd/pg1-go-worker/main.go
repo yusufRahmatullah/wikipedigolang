@@ -7,7 +7,7 @@ import (
 
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/logger"
 
-	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/igprofile"
+	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/igprofile/job"
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/utils"
 
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/jobqueue"
@@ -21,24 +21,25 @@ var (
 func init() {
 	// initialilze JobAssigner
 	jobAssigner = jobqueue.NewJobAssigner()
-	singleAccountJob := igprofile.NewSingleAccountJob()
+	singleAccountJob := job.NewSingleAccountJob()
+	updaterJob := job.NewUpdaterJob()
 	jobAssigner.Register(singleAccountJob)
+	jobAssigner.Register(updaterJob)
 }
 
-func main() {
-	var jobQueues []jobqueue.JobQueue
-	var jobQueue jobqueue.JobQueue
+func getWaitTime() int {
 	waitTimeStr := os.Getenv("WAIT_TIME")
 	waitTime, err := strconv.Atoi(waitTimeStr)
 	if err != nil {
 		mainLogger.Warning("$WAIT_TIME not found, use default")
 		waitTime = 5
 	}
-	err = utils.DefaultProcess.Open()
-	defer utils.DefaultProcess.Close()
-	if err != nil {
-		mainLogger.Error("Failed to open phantomjs process")
-	}
+	return waitTime
+}
+
+func consumeJobs(waitTime int) {
+	var jobQueues []jobqueue.JobQueue
+	var jobQueue jobqueue.JobQueue
 
 	for true {
 		jobQueues = jobqueue.GetAll()
@@ -51,4 +52,14 @@ func main() {
 			}
 		}
 	}
+}
+
+func main() {
+	// open phantom JS
+	err := utils.DefaultProcess.Open()
+	defer utils.DefaultProcess.Close()
+	if err != nil {
+		mainLogger.Error("Failed to open phantomjs process")
+	}
+	consumeJobs(getWaitTime())
 }

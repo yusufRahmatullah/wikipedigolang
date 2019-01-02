@@ -34,7 +34,7 @@ func init() {
 
 // IgProfile holds information about IG Profile
 // include its IG ID, Name, followers number, following number,
-// post number, and
+// post number, and profile picture URL
 type IgProfile struct {
 	ID         bson.ObjectId `json:"id" bson:"_id,omitempty"`
 	CreatedAt  time.Time     `json:"created_at,omitempty" bson:"created_at"`
@@ -44,6 +44,7 @@ type IgProfile struct {
 	Followers  int           `json:"followers" bson:"followers"`
 	Following  int           `json:"following" bson:"following"`
 	Posts      int           `json:"posts" bson:"posts"`
+	PpURL      string        `json:"pp_url" bson:"pp_url"`
 }
 
 func (model *IgProfile) initTime() {
@@ -53,13 +54,14 @@ func (model *IgProfile) initTime() {
 
 // NewIgProfile returns new IgProfile instance
 // Requires IG Id, name, number of followers, following, and posts
-func NewIgProfile(igID, name string, followers, following, posts int) *IgProfile {
+func NewIgProfile(igID, name string, followers, following, posts int, ppURL string) *IgProfile {
 	return &IgProfile{
 		IGID:      igID,
 		Name:      name,
 		Followers: followers,
 		Following: following,
 		Posts:     posts,
+		PpURL:     ppURL,
 	}
 }
 
@@ -173,4 +175,74 @@ func DeleteIgProfile(igID string) bool {
 	}
 	modelLogger.Info(fmt.Sprintf("Failed to move deleted IgProfile with IG ID: %v", igp.IGID))
 	return false
+}
+
+// Builder instantiate the IgProfile using builder pattern
+type Builder struct {
+	IGID      string
+	Name      string
+	Followers int
+	Following int
+	Posts     int
+	PpURL     string
+}
+
+// NewBuilder instante new IgProgile Builder
+func NewBuilder() *Builder {
+	return &Builder{
+		IGID:      "",
+		Name:      "",
+		Followers: 0,
+		Following: 0,
+		Posts:     0,
+		PpURL:     "",
+	}
+}
+
+// Build instantiate new IgProfile instance with Builder's attribute
+func (bd *Builder) Build() *IgProfile {
+	return &IgProfile{
+		IGID:      bd.IGID,
+		Name:      bd.Name,
+		Followers: bd.Followers,
+		Following: bd.Following,
+		Posts:     bd.Posts,
+		PpURL:     bd.PpURL,
+	}
+}
+
+// SetFollowers set Builder's Followers
+func (bd *Builder) SetFollowers(fol int) *Builder {
+	bd.Followers = fol
+	return bd
+}
+
+// SetFollowing set Builder's Following
+func (bd *Builder) SetFollowing(fol int) *Builder {
+	bd.Following = fol
+	return bd
+}
+
+// SetIGID set Builder's IGID
+func (bd *Builder) SetIGID(igID string) *Builder {
+	bd.IGID = igID
+	return bd
+}
+
+// SetName set Builder's Name
+func (bd *Builder) SetName(name string) *Builder {
+	bd.Name = name
+	return bd
+}
+
+// SetPosts set Builder's Posts
+func (bd *Builder) SetPosts(posts int) *Builder {
+	bd.Posts = posts
+	return bd
+}
+
+// SetPpURL set Builder's PpURL
+func (bd *Builder) SetPpURL(ppURL string) *Builder {
+	bd.PpURL = ppURL
+	return bd
 }
