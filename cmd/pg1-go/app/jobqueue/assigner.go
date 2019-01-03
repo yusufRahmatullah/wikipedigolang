@@ -39,8 +39,9 @@ func (ja *JobAssigner) ProcessJobQueue(jobQueue *JobQueue) bool {
 		}
 		assignerLogger.Info(fmt.Sprintf("Failed to process %v with params: %v", name, params))
 
+	} else {
+		assignerLogger.Info(fmt.Sprintf("%v not exist", name))
 	}
-	assignerLogger.Info(fmt.Sprintf("%v not exist", name))
 	PostponeJobQueue(jobQueue)
 	return false
 }

@@ -119,7 +119,7 @@ func generateChanges(igp *IgProfile) map[string]interface{} {
 // with new data. Returns true if success
 func SaveOrUpdate(igp *IgProfile) bool {
 	strdIgp := GetIgProfile(igp.IGID)
-	if strdIgp == nil {
+	if strdIgp.IGID == "" {
 		return Save(igp)
 	}
 	return Update(igp.IGID, generateChanges(igp))

@@ -2,17 +2,17 @@ package job
 
 import (
 	"fmt"
+	"os"
+	"strconv"
 	"strings"
 	"time"
-
-	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/igpost"
 
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/jobqueue"
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/logger"
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/utils"
 )
 
-const maJsAsyncFunc = `function() {
+const maJsAsyncFuncTemp = `function() {
     window.retData = new Set();
     function run(times) {
         if (times > 0) {
@@ -25,16 +25,38 @@ const maJsAsyncFunc = `function() {
 			setTimeout(run.bind(null, times-1), 2000);
 		}
     }
-    setTimeout(run.bind(null, 10), 1);
+    setTimeout(run.bind(null, %d), 1);
 }`
 
 const maJsSyncFunc = `function() {
 	return {posts: Array.from(window.retData)};
 }`
 
+const defaultAsyncLoop = 10
+
 var (
-	majLogger = logger.NewLogger("MultiAccountJob", true, true)
+	asyncLoop     int
+	asyncWaitTime int
+	maJsAsyncFunc string
+	majLogger     = logger.NewLogger("MultiAccountJob", true, true)
 )
+
+func init() {
+	var err error
+	alStr := os.Getenv("ASYNC_LOOP")
+	if alStr == "" {
+		majLogger.Info("$ASYNC_LOOP not found, use default")
+		asyncLoop = defaultAsyncLoop
+	} else {
+		asyncLoop, err = strconv.Atoi(alStr)
+		if err != nil {
+			majLogger.Info(fmt.Sprintf("Failed to convert %v to int", alStr))
+			asyncLoop = defaultAsyncLoop
+		}
+	}
+	asyncWaitTime = asyncLoop*2 + 5
+	maJsAsyncFunc = fmt.Sprintf(maJsAsyncFuncTemp, asyncWaitTime)
+}
 
 // MultiAccountJob is the job for crawling an account
 // that contains multiple accounts in its posts
@@ -57,8 +79,12 @@ func processPostsData(data map[string]interface{}) {
 	for _, post := range posts {
 		ss := strings.Split(post.(string)[3:], "/")
 		pID := ss[0]
-		ip := igpost.NewIgPost(pID)
-		igpost.Save(ip)
+		if pID != "" {
+			jq := jobqueue.NewJobQueue("PostExtractionJob", map[string]interface{}{
+				"post_id": pID,
+			})
+			jobqueue.Save(jq)
+		}
 	}
 }
 
@@ -67,8 +93,8 @@ func crawlMultiIgID(igID string) {
 	if wpw != nil {
 		defer wpw.Close()
 		wpw.OnAsyncEvaluated(func() {
-			majLogger.Debug("Async Func success. Waiting for 25 seconds")
-			time.Sleep(25 * time.Second)
+			majLogger.Debug(fmt.Sprintf("Async Func success. Waiting for %v seconds", asyncWaitTime))
+			time.Sleep(time.Duration(asyncWaitTime) * time.Second)
 			wpw.Evaluate(maJsSyncFunc)
 		})
 		wpw.OnEvaluated(func(data map[string]interface{}) {

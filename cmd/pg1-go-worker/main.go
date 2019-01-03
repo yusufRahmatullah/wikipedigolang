@@ -7,7 +7,8 @@ import (
 
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/logger"
 
-	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/igprofile/job"
+	igPostJob "git.heroku.com/pg1-go-work/cmd/pg1-go/app/igpost/job"
+	igProfileJob "git.heroku.com/pg1-go-work/cmd/pg1-go/app/igprofile/job"
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/utils"
 
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/jobqueue"
@@ -21,12 +22,14 @@ var (
 func init() {
 	// initialilze JobAssigner
 	jobAssigner = jobqueue.NewJobAssigner()
-	singleAccountJob := job.NewSingleAccountJob()
-	updaterJob := job.NewUpdaterJob()
-	multiAccountJob := job.NewMultiAccountJob()
+	singleAccountJob := igProfileJob.NewSingleAccountJob()
+	updaterJob := igProfileJob.NewUpdaterJob()
+	multiAccountJob := igProfileJob.NewMultiAccountJob()
+	postExtractorJob := igPostJob.NewPostExtractionJob()
 	jobAssigner.Register(singleAccountJob)
 	jobAssigner.Register(updaterJob)
 	jobAssigner.Register(multiAccountJob)
+	jobAssigner.Register(postExtractorJob)
 }
 
 func getWaitTime() int {
