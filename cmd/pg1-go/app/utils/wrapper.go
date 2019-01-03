@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"time"
 
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/logger"
 )
@@ -14,6 +15,10 @@ type OnPageOpennedListener func()
 // if the WebPage success to evaluate a JS script
 type OnEvaluatedListener func(map[string]interface{})
 
+// OnAsyncEvaluatedListener is the function that will be called
+// if the WebPage success to evaluate an async JS script
+type OnAsyncEvaluatedListener func()
+
 // OnErrorListener is the function that will be called
 // if any error occurred
 type OnErrorListener func(err error)
@@ -21,11 +26,12 @@ type OnErrorListener func(err error)
 // WebPageWrapper wraps and simplify WebPage
 // Don't forget to defer Close method
 type WebPageWrapper struct {
-	page                   *WebPage
-	mLogger                *logger.Logger
-	onPageOpennedListeners []OnPageOpennedListener
-	onEvaluatedListeners   []OnEvaluatedListener
-	onErrorListeners       []OnErrorListener
+	page                      *WebPage
+	mLogger                   *logger.Logger
+	onPageOpennedListeners    []OnPageOpennedListener
+	onEvaluatedListeners      []OnEvaluatedListener
+	onErrorListeners          []OnErrorListener
+	onAsyncEvaluatedListeners []OnAsyncEvaluatedListener
 }
 
 // NewWebPageWrapper instantiate WebPageWrapper instance
@@ -36,6 +42,12 @@ func NewWebPageWrapper(mLogger *logger.Logger) *WebPageWrapper {
 	}
 	mLogger.Fatal(fmt.Sprintf("Failed to create page. Causes: %v", err))
 	return nil
+}
+
+func (ww *WebPageWrapper) callOnError(err error) {
+	for _, oer := range ww.onErrorListeners {
+		oer(err)
+	}
 }
 
 // OnPageOpenned add OnPageOpennedListener to WebPageWrapper
@@ -53,6 +65,7 @@ func (ww *WebPageWrapper) OpenURL(url string) {
 		}
 	} else {
 		ww.mLogger.Fatal(fmt.Sprintf("Failed to open URL: %v", url))
+		ww.callOnError(err)
 	}
 }
 
@@ -76,6 +89,26 @@ func (ww *WebPageWrapper) Evaluate(js string) {
 		}
 	} else {
 		ww.mLogger.Fatal(fmt.Sprintf("Failed to execute JS. Causes: %v", err))
+		ww.callOnError(err)
+	}
+}
+
+// OnAsyncEvaluated add OnAsyncEvaluatedListener to WebPageWrapper
+func (ww *WebPageWrapper) OnAsyncEvaluated(fn OnAsyncEvaluatedListener) {
+	ww.onAsyncEvaluatedListeners = append(ww.onAsyncEvaluatedListeners, fn)
+}
+
+// EvaluateAsync try to evaluate an Async JS script
+// should be waiting for receive the data
+func (ww *WebPageWrapper) EvaluateAsync(js string) {
+	err := ww.page.EvaluateAsync(js, 1*time.Millisecond)
+	if err == nil {
+		for _, oael := range ww.onAsyncEvaluatedListeners {
+			oael()
+		}
+	} else {
+		ww.mLogger.Fatal(fmt.Sprintf("Failed to execute async script. Causes: %v", err))
+		ww.callOnError(err)
 	}
 }
 

@@ -23,8 +23,10 @@ func init() {
 	jobAssigner = jobqueue.NewJobAssigner()
 	singleAccountJob := job.NewSingleAccountJob()
 	updaterJob := job.NewUpdaterJob()
+	multiAccountJob := job.NewMultiAccountJob()
 	jobAssigner.Register(singleAccountJob)
 	jobAssigner.Register(updaterJob)
+	jobAssigner.Register(multiAccountJob)
 }
 
 func getWaitTime() int {
