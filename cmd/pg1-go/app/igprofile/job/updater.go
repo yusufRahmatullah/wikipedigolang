@@ -3,28 +3,12 @@ package job
 import (
 	"fmt"
 
-	"github.com/globalsign/mgo/bson"
-
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/igprofile"
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/jobqueue"
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/logger"
-	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/utils"
 )
 
 var (
-	updaterJsFunction = `function() {
-		var ppNode = document.querySelector("span>img");
-		if (ppNode) {
-			var ppURL = ppNode.getAttribute("src");
-		} else {
-			ppNode = document.querySelector("button>img");
-			var ppURL = "";
-			if (ppNode) {
-				ppURL = ppNode.getAttribute("src");
-			}
-		}
-		return { ppURL: ppURL };
-	}`
 	ujLogger = logger.NewLogger("UpdaterJob", true, true)
 )
 
@@ -43,21 +27,13 @@ func (job *UpdaterJob) Name() string {
 
 func updateIgID(igp *igprofile.IgProfile) {
 	igID := igp.IGID
-	wpw := utils.NewWebPageWrapper(ujLogger)
-	if wpw != nil {
-		defer wpw.Close()
-		wpw.OnEvaluated(func(data map[string]interface{}) {
-			ppURL := data["ppURL"].(string)
-			ujLogger.Debug(fmt.Sprintf("ppURL: %v", ppURL))
-			suc := igprofile.Update(igID, bson.M{"pp_url": ppURL})
-			if suc {
-				ujLogger.Debug(fmt.Sprintf("Success to update IG ID: %v", igID))
-			} else {
-				ujLogger.Fatal(fmt.Sprintf("Failed to update IG ID: %v", igID))
-			}
-		})
-		wpw.OpenURL(fmt.Sprintf("https://www.instagram.com/%v", igID))
-		wpw.Evaluate(updaterJsFunction)
+	updatedIgp := igprofile.FetchIgProfile(igID)
+	changes := igprofile.GenerateChanges(updatedIgp)
+	suc := igprofile.Update(igID, changes)
+	if suc {
+		ujLogger.Debug(fmt.Sprintf("Success to update IG ID: %v", igID))
+	} else {
+		ujLogger.Fatal(fmt.Sprintf("Failed to update IG ID: %v", igID))
 	}
 }
 

@@ -8,32 +8,11 @@ import (
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/igprofile"
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/jobqueue"
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/logger"
-	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/utils"
 )
 
 var (
 	commaVanisher = strings.NewReplacer(",", "")
 	sajLogger     = logger.NewLogger("SingleAccountJob", true, true)
-	saJsFunction  = `function() {
-		var folNode = document.querySelector("a[href$='followed_by_list']>span");
-		var folinNode = document.querySelector("a[href$='follows_list']>span");
-		var postsNode = document.querySelector("a[href$='profile_posts']>span");
-		var ppNode = document.querySelector("span>img");
-		var fol = folNode.getAttribute("title");
-		var folin = folinNode.innerHTML;
-		var posts = postsNode.innerHTML;
-		if (ppNode) {
-			var ppURL = ppNode.getAttribute("src");
-		} else {
-			var ppNode = document.querySelector("button>img");
-			var ppURL = "";
-			if (ppNode) {
-				ppURL = ppNode.getAttribute("src");
-			}
-		}
-		var name = document.title.split("(")[0].trim();
-		return { followers: fol, following: folin, posts: posts, name: name, ppURL: ppURL };
-	}`
 )
 
 // SingleAccountJob is the job for crawling an account
@@ -84,18 +63,10 @@ func processData(igID string, data map[string]interface{}) bool {
 }
 
 func crawlIgID(igID string) bool {
-	wpw := utils.NewWebPageWrapper(sajLogger)
+	igp := igprofile.FetchIgProfile(igID)
 	success := false
-	if wpw != nil {
-		defer wpw.Close()
-		wpw.OnEvaluated(func(data map[string]interface{}) {
-			success = processData(igID, data)
-		})
-		wpw.OnError(func(err error) {
-			success = false
-		})
-		wpw.OpenURL(fmt.Sprintf("https://www.instagram.com/%v", igID))
-		wpw.Evaluate(saJsFunction)
+	if igp != nil {
+		success = igprofile.SaveOrUpdate(igp)
 	}
 	return success
 }

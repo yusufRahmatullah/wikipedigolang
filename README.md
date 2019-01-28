@@ -1,33 +1,33 @@
-# go-queue-example
+# PG1-Go-Work
 
-[![Deploy](https://www.herokucdn.com/deploy/button.png)](https://heroku.com/deploy)
+PG1 means Playground-one because this application is a sandbox application to improve my programming skill. Go means this application is written using Golang. Work means this application contains worker app which runs in the background.
 
-Go based Queue / Background Worker example.
+## Introduction
+ 
+This application contains two processes, web and worker. The web is the sub-app for handling HTTP request from user meanwhile the worker is the sub-app for handling background process. This app is written in Golang using Gin framework and persists the data using MongoDB. This app is deployable on Heroku.
 
-Please read the companion [Heroku Devcenter](https://devcenter.heroku.com/articles/que-go) article.
+## Installation 
 
-After app setup you can test with the following commands:
+I develop this app using Golang version 1.11.2 for Linux/amd64. To run this app, we should install golang first. Golang dependencies are using dep. Install dep and run `dep ensure` to ensure the dependencies are ready. The vendor directory is not registered on .gitignore file. So, the dependencies automatically exists.
 
-In one terminal run the following...
+Because of this app is configured to be deployable in Heroku, don't forget to install heroku-cli too. Heroku is required to read the environment variables.
 
-```term
-heroku logs --tail -a <app name>
+## Run in Local
+
+First, ensure the MongoDB server has been run and the .env has been set. Copy `env.sample` and set the environment variables.
+
+```bash
+$ cp env.sample .env
 ```
 
-In a different terminal run the following...
+Another dependecies is PhantomJS. Download PhantomJS executable because the worker uses PhantomJS to crawl the IG Profiles.
 
-```term
-curl -XPOST "https://<app name>.herokuapp.com/index" -d '{"url": "http://google.com"}'
+To run the app, just call the `./run_local.sh` script (ensure to enable execution on script run_local.sh).
+
+## Deploy to Heroku
+
+Read how to deploy an apps in Heroku. This app requires two buildpacks, `heroku/go` buildpack and PhantomJS buildpack. Add PhantomJS buildpack by run this command
+
+```bash
+$ heroku buildpacks:set  https://github.com/stomita/heroku-buildpack-phantomjs.git
 ```
-
-And you should see something like the following scroll by in the first terminal...
-
-```term
-2015-06-23T18:29:35.663096+00:00 heroku[router]: at=info method=POST path="/index" host=<app name>.herokuapp.com request_id=84f9d369-7d6e-4313-8f16-9db9bb7ed251 fwd="76.115.27.201" dyno=web.1 connect=19ms service=31ms status=202 bytes=141
-2015-06-23T18:29:35.623878+00:00 app[web.1]: [negroni] Started POST /index
-2015-06-23T18:29:35.644483+00:00 app[web.1]: [negroni] Completed 202 Accepted in 20.586125ms
-2015-06-23T18:29:37.750543+00:00 app[worker.1]: time="2015-06-23T18:29:37Z" level=info msg="Processing IndexRequest! (not really)" IndexRequest={http://google.com}
-2015-06-23T18:29:37.753021+00:00 app[worker.1]: 2015/06/23 18:29:37 event=job_worked job_id=1 job_type=IndexRequests
-```
-
-This shows the web process getting the request to index a url (http://google.com) and then the worker picking up the raw job and "processing" it.

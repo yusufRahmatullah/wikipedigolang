@@ -81,7 +81,7 @@ func modifyIgProfileHandler(c *gin.Context) {
 	var igp IgProfile
 	c.BindJSON(&igp)
 	igID := c.Param("ig_id")
-	changes := generateChanges(&igp)
+	changes := GenerateChanges(&igp)
 
 	suc := Update(igID, changes)
 	var msg string

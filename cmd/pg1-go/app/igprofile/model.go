@@ -94,7 +94,8 @@ func Update(igID string, changes map[string]interface{}) bool {
 	return false
 }
 
-func generateChanges(igp *IgProfile) map[string]interface{} {
+// GenerateChanges build hash map of non-empty igp's attributes
+func GenerateChanges(igp *IgProfile) map[string]interface{} {
 	changes := gin.H{}
 	if igp.Name != "" {
 		changes["name"] = igp.Name
@@ -122,7 +123,7 @@ func SaveOrUpdate(igp *IgProfile) bool {
 	if strdIgp.IGID == "" {
 		return Save(igp)
 	}
-	return Update(igp.IGID, generateChanges(igp))
+	return Update(igp.IGID, GenerateChanges(igp))
 }
 
 // GetAll returns All IgProfile in database
