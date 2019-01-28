@@ -28,12 +28,14 @@ func (job *UpdaterJob) Name() string {
 func updateIgID(igp *igprofile.IgProfile) {
 	igID := igp.IGID
 	updatedIgp := igprofile.FetchIgProfile(igID)
-	changes := igprofile.GenerateChanges(updatedIgp)
-	suc := igprofile.Update(igID, changes)
-	if suc {
-		ujLogger.Debug(fmt.Sprintf("Success to update IG ID: %v", igID))
-	} else {
-		ujLogger.Fatal(fmt.Sprintf("Failed to update IG ID: %v", igID))
+	if updateIgID != nil {
+		changes := igprofile.GenerateChanges(updatedIgp)
+		suc := igprofile.Update(igID, changes)
+		if suc {
+			ujLogger.Debug(fmt.Sprintf("Success to update IG ID: %v", igID))
+		} else {
+			ujLogger.Fatal(fmt.Sprintf("Failed to update IG ID: %v", igID))
+		}
 	}
 }
 
