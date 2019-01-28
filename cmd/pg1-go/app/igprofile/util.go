@@ -24,38 +24,42 @@ func FetchIgProfile(igID string) *IgProfile {
 	resp, err := r.Get(fmt.Sprintf("https://www.instagram.com/%s", igID))
 	if err == nil {
 		bodyText := resp.String()
-		sharedData := matcher.FindStringSubmatch(bodyText)[1]
+		matches := matcher.FindStringSubmatch(bodyText)
+		if len(matches) < 2 {
+			utilLogger.Fatal(fmt.Sprintf("Failed to match sharedData on IG ID: %s", igID))
+			return nil
+		}
+		sharedData := matches[1]
 		if sharedData == "" {
 			utilLogger.Fatal("sharedData is empty")
-		} else {
-			sharedData = sharedData[:len(sharedData)-1]
-			var data map[string]interface{}
-			json.Unmarshal([]byte(sharedData), &data)
-			if data == nil {
-				utilLogger.Fatal("Failed to parse sharedData")
-			} else {
-				entryData := data["entry_data"].(map[string]interface{})
-				pps := entryData["ProfilePage"].([]interface{})
-				pp := pps[0].(map[string]interface{})
-				graph := pp["graphql"].(map[string]interface{})
-				user := graph["user"].(map[string]interface{})
-				edgeFollow := user["edge_follow"].(map[string]interface{})
-				following := int(edgeFollow["count"].(float64))
-				edgeFollowed := user["edge_followed_by"].(map[string]interface{})
-				followers := int(edgeFollowed["count"].(float64))
-				name := user["full_name"].(string)
-				posts := user["edge_owner_to_timeline_media"].(map[string]interface{})
-				postsCount := int(posts["count"].(float64))
-				ppHD := user["profile_pic_url_hd"].(string)
-
-				builder := NewBuilder()
-				builder = builder.SetIGID(igID).SetFollowers(followers).SetName(name)
-				builder = builder.SetFollowing(following).SetPosts(postsCount).SetPpURL(ppHD)
-				return builder.Build()
-			}
+			return nil
 		}
-	} else {
-		utilLogger.Fatal(fmt.Sprintf("Failed to fetch IG ID: %s", igID))
+		sharedData = sharedData[:len(sharedData)-1]
+		var data map[string]interface{}
+		json.Unmarshal([]byte(sharedData), &data)
+		if data == nil {
+			utilLogger.Fatal(fmt.Sprintf("Failed to parse sharedData on IG ID: %s", igID))
+			return nil
+		}
+		entryData := data["entry_data"].(map[string]interface{})
+		pps := entryData["ProfilePage"].([]interface{})
+		pp := pps[0].(map[string]interface{})
+		graph := pp["graphql"].(map[string]interface{})
+		user := graph["user"].(map[string]interface{})
+		edgeFollow := user["edge_follow"].(map[string]interface{})
+		following := int(edgeFollow["count"].(float64))
+		edgeFollowed := user["edge_followed_by"].(map[string]interface{})
+		followers := int(edgeFollowed["count"].(float64))
+		name := user["full_name"].(string)
+		posts := user["edge_owner_to_timeline_media"].(map[string]interface{})
+		postsCount := int(posts["count"].(float64))
+		ppHD := user["profile_pic_url_hd"].(string)
+
+		builder := NewBuilder()
+		builder = builder.SetIGID(igID).SetFollowers(followers).SetName(name)
+		builder = builder.SetFollowing(following).SetPosts(postsCount).SetPpURL(ppHD)
+		return builder.Build()
 	}
+	utilLogger.Fatal(fmt.Sprintf("Failed to fetch IG ID: %s", igID))
 	return nil
 }

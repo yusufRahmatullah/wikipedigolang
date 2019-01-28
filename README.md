@@ -1,6 +1,6 @@
 # PG1-Go-Work
 
-PG1 means Playground-one because this application is a sandbox application to improve my programming skill. Go means this application is written using Golang. Work means this application contains worker app which runs in the background.
+This is the code base of this [heroku app](http://pg1-go-work.herokuapp.com/igprofiles). PG1 means Playground-one because this application is a sandbox application to improve my programming skill. Go means this application is written using Golang. Work means this application contains worker app which runs in the background.
 
 ## Introduction
  
