@@ -27,9 +27,9 @@ func (job *UpdaterJob) Name() string {
 
 func updateIgID(igp *igprofile.IgProfile) {
 	igID := igp.IGID
-	updatedIgp := igprofile.FetchIgProfile(igID)
-	if updateIgID != nil {
-		changes := igprofile.GenerateChanges(updatedIgp)
+	igp2 := igprofile.FetchIgProfile(igID)
+	if igp2 != nil {
+		changes := igprofile.GenerateChanges(igp2)
 		suc := igprofile.Update(igID, changes)
 		if suc {
 			ujLogger.Debug(fmt.Sprintf("Success to update IG ID: %v", igID))

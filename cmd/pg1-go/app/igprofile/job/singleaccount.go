@@ -1,8 +1,6 @@
 package job
 
 import (
-	"fmt"
-	"strconv"
 	"strings"
 
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/igprofile"
@@ -27,39 +25,6 @@ func NewSingleAccountJob() *SingleAccountJob {
 // Name returns the SingleAccountJob
 func (job *SingleAccountJob) Name() string {
 	return "SingleAccountJob"
-}
-
-func processData(igID string, data map[string]interface{}) bool {
-	followers := commaVanisher.Replace(data["followers"].(string))
-	following := commaVanisher.Replace(data["following"].(string))
-	posts := commaVanisher.Replace(data["posts"].(string))
-	name := data["name"].(string)
-	ppURL := data["ppURL"].(string)
-	nbf, err := strconv.Atoi(followers)
-	if err != nil {
-		sajLogger.Fatal(fmt.Sprintf("Failed to convert follower text to int: %v", followers))
-		return false
-	}
-	sajLogger.Debug(fmt.Sprintf("Followers: %v", nbf))
-
-	nbfin, err := strconv.Atoi(following)
-	if err != nil {
-		sajLogger.Fatal(fmt.Sprintf("Failed to convert following text: %v", following))
-		return false
-	}
-	sajLogger.Debug(fmt.Sprintf("Following: %v", nbfin))
-
-	np, err := strconv.Atoi(posts)
-	if err != nil {
-		sajLogger.Fatal(fmt.Sprintf("Failed to convert posts text: %v", posts))
-		return false
-	}
-	sajLogger.Debug(fmt.Sprintf("Posts: %v", np))
-	igpBuilder := igprofile.NewBuilder()
-	igpBuilder = igpBuilder.SetIGID(igID).SetName(name)
-	igpBuilder = igpBuilder.SetFollowers(nbf).SetFollowing(nbfin)
-	igp := igpBuilder.SetPosts(np).SetPpURL(ppURL).Build()
-	return igprofile.SaveOrUpdate(igp)
 }
 
 func crawlIgID(igID string) bool {
