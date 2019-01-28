@@ -8,6 +8,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func getAvailableJobsHandler(c *gin.Context) {
+	avaJobs := getAvailableJobs()
+	data := base.StandardJSON("", avaJobs)
+	c.JSON(200, data)
+}
+
 // newJobQueueHandler handles the request to post a new JobQueue
 func newJobQueueHandler(c *gin.Context) {
 	var jq JobQueue

@@ -2,7 +2,6 @@ package main
 
 import (
 	"html/template"
-	"net/http"
 	"os"
 
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/logger"
@@ -47,7 +46,8 @@ func main() {
 	router.Static("/static", "static")
 
 	router.GET("/", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "index.tmpl.html", nil)
+		// c.HTML(http.StatusOK, "index.tmpl.html", nil)
+		c.Redirect(301, "/igprofiles")
 	})
 
 	jobqueue.DefineAPIRoutes(router, "")

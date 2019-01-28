@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"strings"
 
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/logger"
 	"github.com/imroc/req"
@@ -62,4 +63,16 @@ func FetchIgProfile(igID string) *IgProfile {
 	}
 	utilLogger.Fatal(fmt.Sprintf("Failed to fetch IG ID: %s", igID))
 	return nil
+}
+
+// CleanIgIDParams clean igID params from JobQueue which may copied
+// from complete URL
+func CleanIgIDParams(igID string) string {
+	cleanID := igID
+	if strings.HasPrefix(cleanID, "https://www.instagram.com/") {
+		noHost := cleanID[26:]
+		splts := strings.Split(noHost, "/")
+		cleanID = splts[0]
+	}
+	return cleanID
 }

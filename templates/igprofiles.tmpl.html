@@ -7,18 +7,19 @@
         {{if .Profiles}}
         <div class="row"></div>
             {{range .Profiles}}
-            <div class="col-md-2">
+            <div class="col-md-3">
                 <div class="card">
                     <img src="{{.PpURL}}" class="section media" style="height:100%;"/>
                     <div class="section double-padded center">{{.Name}}</div>
                     <a href="https://www.instagram.com/{{.IGID}}" target="_blank">
                         <div class="section dark center">@{{.IGID}}</div>
                     </a>
-                    <div class="section">
+                    <!-- Hide temporary -->
+                    <!-- <div class="section">
                         Followers: {{.Followers | humInt}}<br />
                         Following: {{.Following | humInt}}<br />
                         Posts: {{.Posts | humInt}}
-                    </div>
+                    </div> -->
                 </div>
             </div>
             {{end}}

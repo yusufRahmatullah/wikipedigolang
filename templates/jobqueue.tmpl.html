@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html>
   {{template "header.tmpl.html"}}
-<body>
+<body onload="loadAvaJobs();">
     <center>
         <label for="jobName">Job Name: </label>
-        <input type="text" id="jobName" name="jobName" value="SingleAccountJob">
+        <select name="jobName" id="jobName">
+        </select>
         <br />
         <label for="igId">IG ID: </label>
         <input type="text" id="igId" name="igId">
@@ -12,6 +13,23 @@
         <button type="submit" onclick="post();">Post Job</button>
     </center>
 <script>
+    function loadAvaJobs() {
+        var selectNode = document.querySelector("#jobName");
+        fetch('/available_jobs', {
+            method: 'GET',
+            credentials: 'same-origin'
+        }).then(resp => resp.json())
+        .then(json => {
+            var data = json.data;
+            data.forEach(el => {
+                var opt = document.createElement("option");
+                opt.setAttribute("value", el.name);
+                opt.innerHTML = el.name;
+                selectNode.append(opt)
+            });
+        })
+    }
+
     function post() {
         var jobNameInput = document.querySelector("#jobName");
         var jobName = jobNameInput.value;

@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/igprofile"
+
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/jobqueue"
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/logger"
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/utils"
@@ -112,7 +114,8 @@ func (job *MultiAccountJob) Process(jq *jobqueue.JobQueue) bool {
 	params := (*jq).Params
 	igID, ok := params["ig_id"]
 	if ok {
-		crawlMultiIgID(igID.(string))
+		cleanID := igprofile.CleanIgIDParams(igID.(string))
+		crawlMultiIgID(cleanID)
 	} else {
 		majLogger.Info("Param ig_id not found")
 	}

@@ -43,7 +43,8 @@ func (job *SingleAccountJob) Process(jq *jobqueue.JobQueue) bool {
 	params := (*jq).Params
 	igID, ok := params["ig_id"]
 	if ok {
-		return crawlIgID(igID.(string))
+		cleanID := igprofile.CleanIgIDParams(igID.(string))
+		return crawlIgID(cleanID)
 	}
 	return false
 }
