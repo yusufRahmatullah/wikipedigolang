@@ -66,9 +66,7 @@ func GetAll() []JobQueue {
 	col := dataAccess.GetCollection(jobQueueCol)
 	var jobQueues []JobQueue
 	err := col.Find(nil).Limit(JobLimit).All(&jobQueues)
-	if err == nil {
-		modelLogger.Debug("Success to get all JobQueues")
-	} else {
+	if err != nil {
 		modelLogger.Fatal("Failed to get all JobQueue")
 	}
 	return jobQueues

@@ -39,7 +39,6 @@
                     'username': username,
                     'password': password
                 };
-                console.log('==debug== body: '+JSON.stringify(data))
                 fetch('/api/login', {
                     method: 'POST',
                     body: JSON.stringify(data),
@@ -50,7 +49,6 @@
                 })
                 .then(resp => resp.json())
                 .then(json => {
-                    console.log('==debug== json: '+JSON.stringify(json));
                     if (json.status === 'OK') {
                         window.location = '/'
                     } else if (json.status === 'error') {

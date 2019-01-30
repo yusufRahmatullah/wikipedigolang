@@ -31,3 +31,7 @@ Read how to deploy an apps in Heroku. This app requires two buildpacks, `heroku/
 ```bash
 $ heroku buildpacks:set  https://github.com/stomita/heroku-buildpack-phantomjs.git
 ```
+
+## To Do(s)
+
+To Do list can be seen on [Wikipedigolang's Trello](https://trello.com/b/Rg10E5Rk/wikipedigolang)

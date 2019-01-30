@@ -23,18 +23,22 @@ func init() {
 	matcher = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9_]+[A-Za-z0-9]$`)
 }
 
-// Required is the middleware that handles the
-// request should be authenticated
-func Required() gin.HandlerFunc {
+// RequiredAdmin is the middleware that handles the
+// request should be authenticated as user which has
+// admin role
+func RequiredAdmin() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		session := sessions.Default(c)
-		user := session.Get("user")
-		if user == nil {
-			c.Redirect(http.StatusUnauthorized, "/login")
-		} else {
-			// Continue down the chain to handler etc
-			c.Next()
+		user := session.Get("sid")
+		if user != nil {
+			username := user.(string)
+			user := GetUser(username)
+			if user.Role == adminRole {
+				// Continue down the chain to handler etc
+				c.Next()
+			}
 		}
+		c.Redirect(http.StatusPermanentRedirect, "/login")
 	}
 }
 
@@ -57,7 +61,6 @@ func login(c *gin.Context) {
 		Password: "",
 	}
 	c.BindJSON(&loginData)
-	fmt.Printf("==debug== loginData: %v", loginData)
 	username := strings.Trim(loginData.Username, " ")
 	password := strings.Trim(loginData.Password, " ")
 
