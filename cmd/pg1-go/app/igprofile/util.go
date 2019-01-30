@@ -72,6 +72,7 @@ func CleanIgIDParams(igID string) string {
 	if strings.HasPrefix(cleanID, "https://www.instagram.com/") {
 		noHost := cleanID[26:]
 		splts := strings.Split(noHost, "/")
+		splts = strings.Split(splts[0], "?")
 		cleanID = splts[0]
 	}
 	return cleanID

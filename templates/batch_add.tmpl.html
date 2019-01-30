@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+  {{template "header.tmpl.html"}}
+<body>
+    <center>
+        <h2>Batch Add (SingleAccountJob)</h2>
+        <label for="igId">IG ID(s): <sub>(List of IG ID or IG URL separated by new line)</sub></label>
+        <br />
+        <textarea id="igId" name="igId" rows="5"></textarea>
+        <br/>
+        <button type="submit" onclick="post();">Post Job</button>
+    </center>
+<script>
+    function loadAvaJobs() {
+        var selectNode = document.querySelector("#jobName");
+        fetch('/api/available_jobs', {
+            method: 'GET',
+            credentials: 'same-origin'
+        }).then(resp => resp.json())
+        .then(json => {
+            var data = json.data;
+            data.forEach(el => {
+                var opt = document.createElement("option");
+                opt.setAttribute("value", el.name);
+                opt.innerHTML = el.name;
+                selectNode.append(opt)
+            });
+        })
+    }
+
+    function post() {
+        var igIdInput = document.querySelector("#igId");
+        var igIds = igIdInput.value.split("\n");
+        var data = {
+            "name": "BatchAdd",
+            "params": {
+                "ig_ids": igIds,
+            }
+        }
+        console.log('==debug== data: '+JSON.stringify(data));
+        fetch('/api/batch_add', {
+            method: "POST",
+            body: JSON.stringify(data),
+            headers: {
+                "Content-Type": "application/json",
+            },
+            credentials: "same-origin"
+        })
+        .then(resp => resp.json())
+        .then(json => {
+            if (json.status === "OK") {
+                igIdInput.value = "";
+            } else if (json.status == "error") {
+                alert(json.message);
+            }
+        })
+    }
+</script>
+</body>
+</html>

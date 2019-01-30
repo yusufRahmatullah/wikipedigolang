@@ -38,7 +38,30 @@ func newJobQueueHandler(c *gin.Context) {
 	}
 }
 
+func batchAddHandler(c *gin.Context) {
+	var jq JobQueue
+	c.BindJSON(&jq)
+	if jq.Name == "" {
+		data := base.ErrorJSON("name is required", nil)
+		c.JSON(http.StatusBadRequest, data)
+	} else {
+		ids, ok := jq.Params["ig_ids"]
+		if ok {
+			for _, igID := range ids.([]interface{}) {
+				ijq := NewJobQueue("SingleAccountJob", gin.H{"ig_id": igID.(string)})
+				Save(ijq)
+			}
+		}
+		data := base.StandardJSON("Batch Add JobQueue successful", nil)
+		c.JSON(http.StatusOK, data)
+	}
+}
+
 // jobQueueIndexView render JobQueue form
 func jobQueueIndexView(c *gin.Context) {
 	c.HTML(http.StatusOK, "jobqueue.tmpl.html", nil)
+}
+
+func batchAddIndexView(c *gin.Context) {
+	c.HTML(http.StatusOK, "batch_add.tmpl.html", nil)
 }

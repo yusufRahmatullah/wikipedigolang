@@ -10,8 +10,10 @@ func DefineAPIRoutes(router *gin.Engine, prefix string) {
 	reqAdmin := router.Group(prefix)
 	reqAdmin.Use(auth.RequiredAdmin())
 	{
-		reqAdmin.POST("/job_queue", newJobQueueHandler)
 		reqAdmin.GET("/available_jobs", getAvailableJobsHandler)
+		reqAdmin.POST("/batch_add", batchAddHandler)
+		reqAdmin.POST("/job_queue", newJobQueueHandler)
+
 	}
 }
 
@@ -20,6 +22,7 @@ func DefineViewRoutes(router *gin.Engine, prefix string) {
 	reqAdmin := router.Group(prefix)
 	reqAdmin.Use(auth.RequiredAdmin())
 	{
+		reqAdmin.GET("/batch_add", batchAddIndexView)
 		reqAdmin.GET("/job_queue", jobQueueIndexView)
 	}
 }
