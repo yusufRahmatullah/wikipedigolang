@@ -41,3 +41,11 @@
 [[constraint]]
   name = "github.com/imroc/req"
   version = "0.2.3"
+
+[[constraint]]
+  branch = "master"
+  name = "golang.org/x/crypto"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/gin-gonic/contrib"

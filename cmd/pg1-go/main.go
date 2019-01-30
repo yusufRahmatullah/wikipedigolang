@@ -2,8 +2,12 @@ package main
 
 import (
 	"html/template"
+	"net/http"
 	"os"
 
+	"github.com/gin-gonic/contrib/sessions"
+
+	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/auth"
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/logger"
 
 	humanize "github.com/dustin/go-humanize"
@@ -35,8 +39,17 @@ func main() {
 		mainLogger.Error("$PORT must be set")
 	}
 
+	sessionSecret := os.Getenv("SESSION_SECRET")
+	if sessionSecret == "" {
+		mainLogger.Warning("$SESSION_SECRET must be set, set as default")
+		sessionSecret = "LongEnoughSecretKeyTooAvoidBruteForce"
+	}
+
+	store := sessions.NewCookieStore([]byte(sessionSecret))
+
 	router := gin.New()
 	router.Use(gin.Logger())
+	router.Use(sessions.Sessions("defaultSession", store))
 	router.SetFuncMap(template.FuncMap{
 		"decrease": dec,
 		"increase": inc,
@@ -47,12 +60,14 @@ func main() {
 
 	router.GET("/", func(c *gin.Context) {
 		// c.HTML(http.StatusOK, "index.tmpl.html", nil)
-		c.Redirect(301, "/igprofiles")
+		c.Redirect(http.StatusTemporaryRedirect, "/igprofiles")
 	})
 
-	jobqueue.DefineAPIRoutes(router, "")
+	jobqueue.DefineAPIRoutes(router, "api")
 	jobqueue.DefineViewRoutes(router, "")
 	igprofile.DefineAPIRoutes(router, "api")
 	igprofile.DefineViewRoutes(router, "")
+	auth.DefineViewRoutes(router, "")
+	auth.DefineAPIRoutes(router, "api")
 	router.Run(":" + port)
 }

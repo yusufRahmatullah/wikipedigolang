@@ -77,7 +77,7 @@ func (ja *JobAssigner) Register(proc Job) {
 	col := dataAccess.GetCollection(avaJobCol)
 	err := col.Insert(&avaJob{Name: proc.Name()})
 	if err == nil {
-		assignerLogger.Warning(fmt.Sprintf("Success to insert available job: %s", proc.Name()))
+		assignerLogger.Debug(fmt.Sprintf("Success to insert available job: %s", proc.Name()))
 	} else {
 		assignerLogger.Warning(fmt.Sprintf("Failed to insert available job: %s", proc.Name()))
 	}

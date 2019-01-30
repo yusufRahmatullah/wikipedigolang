@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+    {{template "header.tmpl.html"}}
+    <body>
+        <center>
+            <form method="POST" onsubmit="login(); return false;">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" placeholder="Username" onfocus="hideErrorMessage();" pattern="^[A-Za-z0-9][A-Za-z0-9_]+[A-Za-z0-9]$" required />
+                <br />
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="Password" onfocus="hideErrorMessage();" required />
+                <br />
+                <button type="submit">Login</button>
+            </form>
+
+            <span id="error_message" class="toast popout">This is a toast message!</span>
+        </center>
+        <script>
+            function errorMessage(msg) {
+                var sn = document.querySelector('#error_message');
+                sn.innerHTML = msg;
+                sn.style.opacity = 1;
+                sn.style.visibility = 'visible';
+            }
+
+            function hideErrorMessage() {
+                var sn = document.querySelector('#error_message');
+                sn.style.visibility = 'hidden';
+                sn.style.opacity = 0;
+                sn.innerHTML = '';
+            }
+
+            function login() {
+                var un = document.querySelector('#username');
+                var username = un.value;
+                var pn = document.querySelector('#password');
+                var password = pn.value;
+                var data = {
+                    'username': username,
+                    'password': password
+                };
+                console.log('==debug== body: '+JSON.stringify(data))
+                fetch('/api/login', {
+                    method: 'POST',
+                    body: JSON.stringify(data),
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'same-origin'
+                })
+                .then(resp => resp.json())
+                .then(json => {
+                    console.log('==debug== json: '+JSON.stringify(json));
+                    if (json.status === 'OK') {
+                        window.location = '/'
+                    } else if (json.status === 'error') {
+                        errorMessage(json.message);
+                    }
+                })
+                .finally(() => {
+                    pn.value = '';
+                });
+            }
+        </script>
+    </body>
+</html>

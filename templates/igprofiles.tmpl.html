@@ -2,12 +2,12 @@
 <html>
     {{template "header.tmpl.html"}}
 <body>
-    <h1 class="center">IG Profiles</h1>
+    <h1 class="center">IGO Profiles</h1>
     <div class="container">
         {{if .Profiles}}
         <div class="row"></div>
             {{range .Profiles}}
-            <div class="col-md-3">
+            <div class="col-sm-3">
                 <div class="card">
                     <img src="{{.PpURL}}" class="section media" style="height:100%;"/>
                     <div class="section double-padded center">{{.Name}}</div>

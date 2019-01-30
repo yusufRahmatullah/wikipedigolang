@@ -184,7 +184,7 @@ func FindIgProfile(query string, offset, limit int, sortBy ...string) []IgProfil
 	return igps
 }
 
-// DeleteIgProfile removes User instance from database by its IGID
+// DeleteIgProfile removes IgProfile instance from database by its IGID
 // and add the deleted IG ID to another database
 // returns true if success
 func DeleteIgProfile(igID string) bool {

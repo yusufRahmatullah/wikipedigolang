@@ -15,7 +15,7 @@
 <script>
     function loadAvaJobs() {
         var selectNode = document.querySelector("#jobName");
-        fetch('/available_jobs', {
+        fetch('/api/available_jobs', {
             method: 'GET',
             credentials: 'same-origin'
         }).then(resp => resp.json())
@@ -41,7 +41,7 @@
                 "ig_id": igId,
             }
         }
-        fetch('/job_queue', {
+        fetch('/api/job_queue', {
             method: "POST",
             body: JSON.stringify(data),
             headers: {
