@@ -11,7 +11,7 @@ import (
 func getAvailableJobsHandler(c *gin.Context) {
 	avaJobs := getAvailableJobs()
 	data := base.StandardJSON("", avaJobs)
-	c.JSON(200, data)
+	c.JSON(http.StatusOK, data)
 }
 
 // newJobQueueHandler handles the request to post a new JobQueue
@@ -57,6 +57,53 @@ func batchAddHandler(c *gin.Context) {
 	}
 }
 
+func getPostponedJobsHandler(c *gin.Context) {
+	jqs := GetAllPostponed()
+	data := base.StandardJSON("", jqs)
+	c.JSON(http.StatusOK, data)
+}
+
+func deletePostponedHandler(c *gin.Context) {
+	jqid := c.Param("job_id")
+	jq := GetPostponed(jqid)
+	suc := DeletePostponed(jq)
+	if suc {
+		data := base.StandardJSON("Delete postponed JobQueue success", nil)
+		c.JSON(http.StatusOK, data)
+	} else {
+		data := base.ErrorJSON("Failed to delete postponed JobQueue", nil)
+		c.JSON(http.StatusNotModified, data)
+	}
+}
+
+func requeuePostponedHandler(c *gin.Context) {
+	jdata := struct {
+		JobID string `json:"job_id"`
+	}{
+		JobID: "",
+	}
+	c.BindJSON(&jdata)
+	if jdata.JobID == "" {
+		data := base.ErrorJSON("Job ID is empty", nil)
+		c.JSON(http.StatusNotModified, data)
+	} else {
+		jq := GetPostponed(jdata.JobID)
+		if jq.ID != "" {
+			suc := RequeuePostponed(jq)
+			if suc {
+				data := base.StandardJSON("Requeue postponed JobQueue success", nil)
+				c.JSON(http.StatusOK, data)
+			} else {
+				data := base.ErrorJSON("Failed to requeue postponed JobQueue", nil)
+				c.JSON(http.StatusNotModified, data)
+			}
+		} else {
+			data := base.ErrorJSON("Failed to get postponed JobQueue", nil)
+			c.JSON(http.StatusNotModified, data)
+		}
+	}
+}
+
 // jobQueueIndexView render JobQueue form
 func jobQueueIndexView(c *gin.Context) {
 	c.HTML(http.StatusOK, "jobqueue.tmpl.html", nil)
@@ -64,4 +111,8 @@ func jobQueueIndexView(c *gin.Context) {
 
 func batchAddIndexView(c *gin.Context) {
 	c.HTML(http.StatusOK, "batch_add.tmpl.html", nil)
+}
+
+func postponedJobsView(c *gin.Context) {
+	c.HTML(http.StatusOK, "postponed_jobs.tmpl.html", nil)
 }

@@ -106,3 +106,64 @@ func PostponeJobQueue(jobQueue *JobQueue) bool {
 	modelLogger.Info(fmt.Sprintf("Failed to postpone JobQueue with name: %v", jobQueue.Name))
 	return false
 }
+
+// GetPostponed returns Postponed JobQueue by its id
+func GetPostponed(jid string) *JobQueue {
+	dataAccess := base.NewDataAccess()
+	defer dataAccess.Close()
+	col := dataAccess.GetCollection(postponedJobCol)
+	var jq JobQueue
+	err := col.FindId(bson.ObjectIdHex(jid)).One(&jq)
+	if err != nil {
+		modelLogger.Info(fmt.Sprintf("Failed to get postponed JobQueue with id: %v", jid))
+	}
+	return &jq
+}
+
+// GetAllPostponed returns all postponed JobQueue in database
+// with maximum records defined by JobLimit
+func GetAllPostponed() []JobQueue {
+	dataAccess := base.NewDataAccess()
+	defer dataAccess.Close()
+	col := dataAccess.GetCollection(postponedJobCol)
+	var jobQueues []JobQueue
+	err := col.Find(nil).Limit(JobLimit).All(&jobQueues)
+	if err != nil {
+		modelLogger.Fatal("Failed to get all JobQueue")
+	}
+	return jobQueues
+}
+
+// DeletePostponed remove postponed JobQueue instance from database
+func DeletePostponed(jq *JobQueue) bool {
+	dataAccess := base.NewDataAccess()
+	defer dataAccess.Close()
+	col := dataAccess.GetCollection(postponedJobCol)
+	err := col.Remove(bson.M{"_id": jq.ID})
+	if err == nil {
+		modelLogger.Info(fmt.Sprintf("Success to delete postponed JobQueue with name: %v", jq.Name))
+		return true
+	}
+	modelLogger.Info(fmt.Sprintf("Failed to delete JobQueue with name: %v", jq.Name))
+	return false
+}
+
+// RequeuePostponed move postponed JobQueue as new JobQueue
+// returns true if success
+func RequeuePostponed(jq *JobQueue) bool {
+	dataAccess := base.NewDataAccess()
+	defer dataAccess.Close()
+	col := dataAccess.GetCollection(jobQueueCol)
+	suc := DeletePostponed(jq)
+	if !suc {
+		return suc
+	}
+	jq.ID = ""
+	err := col.Insert(jq)
+	if err == nil {
+		modelLogger.Info(fmt.Sprintf("Success to requeue JobQueue with name: %v", jq.Name))
+		return true
+	}
+	modelLogger.Info(fmt.Sprintf("Failed to requeue JobQueue with name: %v", jq.Name))
+	return false
+}

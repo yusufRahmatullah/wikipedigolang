@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+    {{template "header.tmpl.html"}}
+    <body onload="loadData();">
+        <h1 class="center">Postponed JobQueue</h1>
+        <div class="container">
+            <div class="card-container">
+
+            </div>
+        </div>
+        <script>
+            function loadData() {
+                fetch('/api/postponed_jobs', {
+                    method: 'GET',
+                    credentials: 'same-origin'
+                })
+                .then(res => res.json())
+                .then(json => {
+                    if (json.status === 'OK') {
+                        json.data.forEach(element => {
+                            appendJob(element);
+                        });
+                    }
+                })
+            }
+
+            function appendJob(data) {
+                var name = data.name;
+                var params = data.params;
+                if (name === undefined || name === "") {
+                    return
+                }
+                var cc = document.querySelector('.card-container');
+                var cn = document.createElement('div');
+                cn.setAttribute('class', 'card fluid');
+                cn.setAttribute('id', data.id);
+                var s1 = document.createElement('div');
+                s1.setAttribute('class', 'section');
+                s1.innerHTML = name;
+                var s2 = document.createElement('div');
+                s2.setAttribute('class', 'section');
+                s2.innerHTML = JSON.stringify(params);
+                var s3 = document.createElement('div');
+                s3.setAttribute('class', 'section');
+                var btnRequeue = document.createElement('button');
+                btnRequeue.setAttribute('class', 'primary');
+                btnRequeue.setAttribute('data-id', data.id);
+                btnRequeue.setAttribute('onclick', 'requeue(this);') 
+                btnRequeue.innerHTML = 'Requeue';
+                s3.append(btnRequeue);
+                var btnDelete = document.createElement('button');
+                btnDelete.setAttribute('class', 'secondary');
+                btnDelete.setAttribute('data-id', data.id);
+                btnDelete.setAttribute('onclick', 'deleteJob(this)');
+                btnDelete.innerHTML = 'Delete';
+                s3.append(btnDelete);
+                cn.append(s1);
+                cn.append(s2);
+                cn.append(s3);
+                cc.append(cn);
+            }
+
+            function requeue(btn) {
+                var nid = btn.getAttribute('data-id');
+                var data = {
+                    'job_id': nid,
+                };
+                fetch('/api/requeue_postponed_jobs', {
+                    method: 'POST',
+                    body: JSON.stringify(data),
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'same-origin',
+                })
+                .then(res => {
+                    var json = res.json();
+                    return json;
+                })
+                .then(json => {
+                    if (json.status === 'OK') {
+                        removeElement(nid);
+                    }
+                })
+                .catch(err => console.error(err))
+            }
+
+            function deleteJob(btn) {
+                var nid = btn.getAttribute('data-id');
+                fetch('/api/postponed_jobs/'+nid, {
+                    method: 'DELETE',
+                    credentials: 'same-origin',
+                })
+                .then(res => res.json())
+                .then(json => {
+                    if (json.status === 'OK') {
+                        removeElement(nid);
+                    }
+                })
+                .catch(err => console.error(err))
+            }
+
+            function removeElement(nid) {
+                var dn = document.getElementById(nid);
+                var cc = dn.parentNode.childElementCount;
+                if (cc == 1) {
+                    loadData();
+                }
+                dn.parentNode.removeChild(dn);
+            }
+        </script>
+    </body>
+</html>
