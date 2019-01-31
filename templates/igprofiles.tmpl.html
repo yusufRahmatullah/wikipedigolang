@@ -1,42 +1,92 @@
 <!DOCTYPE html>
 <html>
     {{template "header.tmpl.html"}}
-<body>
+<body onload="reset();">
     <h1 class="center">IGO Profiles</h1>
     <div class="container">
-        {{if .Profiles}}
-        <div class="row">
-            {{range .Profiles}}
-            <div class="col-sm-4 col-md-3">
-                <div class="card">
-                    <img src="{{.PpURL}}" class="section media" style="height:100%;"/>
-                    <div class="section double-padded center">{{.Name}}</div>
-                    <a href="https://www.instagram.com/{{.IGID}}" target="_blank">
-                        <div class="section dark center">@{{.IGID}}</div>
-                    </a>
-                    <!-- Hide temporary -->
-                    <!-- <div class="section">
-                        Followers: {{.Followers | humInt}}<br />
-                        Following: {{.Following | humInt}}<br />
-                        Posts: {{.Posts | humInt}}
-                    </div> -->
-                </div>
-            </div>
-            {{end}}
+        <div id ="card-container" class="row">
         </div>
+        </div>
+        <div id="not-found" class="card warning" style="visibility: hidden;">Ig Profiles not found</div>
         <div class="center">
-            {{if .HasPrev}}
-            <a href="./igprofiles?page={{.Page | decrease}}">Prev</a>
-            {{end}}
-            Pages: {{.Page}}
-            {{if .HasNext}}
-            <a href="./igprofiles?page={{.Page | increase}}">Next</a>
-            {{end}}
+            <div class="spinner primary"></div>
         </div>
-        </div>    
-        {{else}}
-            <div class="card warning">Ig Profiles not found</div>
-        {{end}}
-    </div>    
+    </div>
+    <script>
+        window.onscroll = function(ev) {
+            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight) {
+                loadData();
+            }
+        };
+        function reset() {
+            window.localStorage.setItem("offset", 0);            
+            loadData();
+        }
+
+        function notFound(v) {
+            var n = document.getElementById('not-found');
+            if (v) {
+                n.style.visibility = 'visible';
+            } else {
+                n.style.visibility = 'hidden';
+            }
+        }
+
+        function spinner(b) {
+            var n = document.querySelector('.spinner');
+            n.style.visibility = b ? 'visible' : 'hidden';
+        }
+
+        function loadData() {
+            spinner(true);
+            var offset = window.localStorage.getItem("offset") || 0;
+            fetch('/api/igprofiles?offset='+offset, {
+                credentials: 'same-origin'
+            })
+            .then(res => res.json())
+            .then(json => {
+                spinner(false);
+                if (json.status === 'OK') {
+                    appendCards(json.data);
+                    if (json.data.length === 0) {
+                        notFound(true);
+                    } else {
+                        notFound(false);
+                    }
+                    window.localStorage.setItem("offset", offset + json.data.length);
+                } else if (json.status === 'error'){
+                    notFound(true);
+                }
+            })
+        }
+
+        function appendCards(cards) {
+            var cc = document.getElementById('card-container');
+            cards.forEach(card => {
+                var col = document.createElement('div');
+                col.setAttribute('class', 'col-sm-4 col-md-3')
+                var c = document.createElement('div');
+                c.setAttribute('class', 'card');
+                var i = document.createElement('img');
+                i.setAttribute('src', card.pp_url);
+                i.setAttribute('style', 'height:100%;');
+                var tt = document.createElement('div');
+                tt.setAttribute('class', 'section double-padded center')
+                tt.innerHTML = cards.name;
+                var a = document.createElement('a');
+                a.setAttribute('href', 'https://www.instagram.com/'+card.ig_id);
+                a.setAttribute('target', '_blank')
+                var at = document.createElement('div');
+                at.setAttribute('class', 'section dark center')
+                at.innerHTML = '@'+card.ig_id;
+                a.appendChild(at);
+                c.appendChild(i);
+                c.appendChild(tt);
+                c.appendChild(a);
+                col.appendChild(c);
+                cc.appendChild(col);
+            });
+        }
+    </script>
 </body>
 </html>
