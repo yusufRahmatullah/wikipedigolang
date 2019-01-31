@@ -79,12 +79,8 @@ func FetchIgProfile(igID string) *IgProfile {
 // CleanIgIDParams clean igID params from JobQueue which may copied
 // from complete URL
 func CleanIgIDParams(igID string) string {
-	cleanID := igID
-	if strings.HasPrefix(cleanID, "https://www.instagram.com/") {
-		noHost := cleanID[26:]
-		splts := strings.Split(noHost, "/")
-		splts = strings.Split(splts[0], "?")
-		cleanID = splts[0]
-	}
+	splts := strings.Split(igID, "/")
+	splts = strings.Split(splts[len(splts)-1], "?")
+	cleanID := splts[0]
 	return cleanID
 }
