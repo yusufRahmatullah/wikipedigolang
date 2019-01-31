@@ -15,8 +15,11 @@ import (
 	"github.com/globalsign/mgo/bson"
 )
 
-const jobQueueCol = "job_queue"
-const postponedJobCol = "postponed_job_queue"
+const (
+	deletedJobCol   = "deleted_job_queue"
+	jobQueueCol     = "job_queue"
+	postponedJobCol = "postponed_job_queue"
+)
 
 var (
 	// JobLimit is maximum Job to be processed and queried
@@ -36,6 +39,7 @@ func init() {
 	defer dataAccess.Close()
 	col := dataAccess.GetCollection(jobQueueCol)
 	pcol := dataAccess.GetCollection(postponedJobCol)
+	dcol := dataAccess.GetCollection(deletedJobCol)
 	index := mgo.Index{
 		Key:        []string{"unique_id"},
 		Unique:     true,
@@ -50,6 +54,10 @@ func init() {
 	err = pcol.EnsureIndex(index)
 	if err != nil {
 		modelLogger.Warning("Failed to create index on Postponed JobQueue Collections")
+	}
+	err = dcol.EnsureIndex(index)
+	if err != nil {
+		modelLogger.Warning("Failed to create index on Deleted JobQueue Collections")
 	}
 }
 
@@ -146,6 +154,12 @@ func PostponeJobQueue(jobQueue *JobQueue) bool {
 	if !suc {
 		return suc
 	}
+	dcol := dataAccess.GetCollection(deletedJobCol)
+	var delJq JobQueue
+	dcol.Find(bson.M{"unique_id": jobQueue.UniqueID}).One(&delJq)
+	if delJq.ID != "" {
+		return false
+	}
 	jobQueue.ID = ""
 	err := col.Insert(jobQueue)
 	if err == nil {
@@ -190,10 +204,16 @@ func DeletePostponed(jq *JobQueue) bool {
 	col := dataAccess.GetCollection(postponedJobCol)
 	err := col.Remove(bson.M{"_id": jq.ID})
 	if err == nil {
-		modelLogger.Info(fmt.Sprintf("Success to delete postponed JobQueue with name: %v", jq.Name))
-		return true
+		dcol := dataAccess.GetCollection(deletedJobCol)
+		jq.ID = ""
+		err = dcol.Insert(jq)
+		if err == nil {
+			return true
+		}
+		modelLogger.Info(fmt.Sprintf("Failed to delete postponed JobQueue with uid: %v", jq.UniqueID))
+		return false
 	}
-	modelLogger.Info(fmt.Sprintf("Failed to delete JobQueue with name: %v", jq.Name))
+	modelLogger.Info(fmt.Sprintf("Failed to delete JobQueue with uid: %v", jq.UniqueID))
 	return false
 }
 

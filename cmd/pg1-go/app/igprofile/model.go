@@ -11,8 +11,10 @@ import (
 	"github.com/globalsign/mgo/bson"
 )
 
-const deletedIDCol = "deleted_ig_id"
-const igProfileCol = "ig_profile"
+const (
+	deletedIDCol = "deleted_ig_id"
+	igProfileCol = "ig_profile"
+)
 
 var modelLogger = logger.NewLogger("IGProfile", true, true)
 
@@ -53,19 +55,25 @@ func (model *IgProfile) initTime() {
 	model.ModifiedAt = time.Now()
 }
 
+func isBanned(igID string) bool {
+	dataAccess := base.NewDataAccess()
+	defer dataAccess.Close()
+	delCol := dataAccess.GetCollection(deletedIDCol)
+	var exsIgp IgProfile
+	delCol.Find(bson.M{"ig_id": igID}).One(&exsIgp)
+	return exsIgp.IGID != ""
+}
+
 // Save writes IgProfile instance to database
 // returns true if success
 func Save(igp *IgProfile) bool {
 	dataAccess := base.NewDataAccess()
 	defer dataAccess.Close()
-	delCol := dataAccess.GetCollection(deletedIDCol)
-	var exsIgp IgProfile
-	delCol.Find(bson.M{"ig_id": igp.IGID}).One(&exsIgp)
-	if exsIgp.IGID != "" {
+	col := dataAccess.GetCollection(igProfileCol)
+	if isBanned(igp.IGID) {
 		modelLogger.Info(fmt.Sprintf("Failed to create IgProfile because IG ID: %v was banned", igp.IGID))
 		return false
 	}
-	col := dataAccess.GetCollection(igProfileCol)
 	igp.initTime()
 	err := col.Insert(igp)
 	if err == nil {
