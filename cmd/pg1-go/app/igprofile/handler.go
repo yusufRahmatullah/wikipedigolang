@@ -128,7 +128,7 @@ func deleteIgProfileHandler(c *gin.Context) {
 	if suc {
 		msg = "Delete IgProfile successful"
 	} else {
-		msg = "Failed to delete User"
+		msg = "Failed to delete IgProfile"
 	}
 	data := base.StandardJSON(msg, nil)
 	c.JSON(http.StatusOK, data)
@@ -139,31 +139,5 @@ func deleteIgProfileHandler(c *gin.Context) {
 /////////////////////////////////
 
 func igProfilesView(c *gin.Context) {
-	pageStr := c.Query("page")
-	limitStr := c.Query("limit")
-	page := convertIntOrDefault(pageStr, 1)
-	limit := convertIntOrDefault(limitStr, defaultLimit)
-	offset := (page - 1) * limit
-	sort := generateSortOrder(c)
-	igps := GetAll(offset, limit, sort)
-	hasPrev := true
-	if page == 1 {
-		hasPrev = false
-	}
-	hasNext := true
-	if len(igps) < limit {
-		hasNext = false
-	}
-	data := struct {
-		Profiles []IgProfile
-		HasPrev  bool
-		HasNext  bool
-		Page     int
-	}{
-		Profiles: igps,
-		HasPrev:  hasPrev,
-		HasNext:  hasNext,
-		Page:     page,
-	}
-	c.HTML(http.StatusOK, "igprofiles.tmpl.html", data)
+	c.HTML(http.StatusOK, "igprofiles.tmpl.html", nil)
 }

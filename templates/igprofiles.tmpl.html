@@ -13,13 +13,17 @@
         </div>
     </div>
     <script>
+        var offset = 0;
+        var lock = false;
+        
         window.onscroll = function(ev) {
-            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight) {
+            if ((window.innerHeight + window.pageYOffset) >= document.body.offsetHeight) {
                 loadData();
             }
         };
+
         function reset() {
-            window.localStorage.setItem("offset", 0);            
+            offset = 0;
             loadData();
         }
 
@@ -33,13 +37,16 @@
         }
 
         function spinner(b) {
+            lock = b;
             var n = document.querySelector('.spinner');
             n.style.visibility = b ? 'visible' : 'hidden';
         }
 
         function loadData() {
+            if (lock) {
+                return
+            }
             spinner(true);
-            var offset = window.localStorage.getItem("offset") || 0;
             fetch('/api/igprofiles?offset='+offset, {
                 credentials: 'same-origin'
             })
@@ -53,7 +60,7 @@
                     } else {
                         notFound(false);
                     }
-                    window.localStorage.setItem("offset", offset + json.data.length);
+                    offset += json.data.length;
                 } else if (json.status === 'error'){
                     notFound(true);
                 }
