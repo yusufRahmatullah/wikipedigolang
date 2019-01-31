@@ -3,7 +3,11 @@ package jobqueue
 import (
 	"fmt"
 	"os"
+	"sort"
 	"strconv"
+	"strings"
+
+	"github.com/globalsign/mgo"
 
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/logger"
 
@@ -28,14 +32,58 @@ func init() {
 		modelLogger.Warning("$JOB_LIMIT not found, using default")
 		JobLimit = 10
 	}
+	dataAccess := base.NewDataAccess()
+	defer dataAccess.Close()
+	col := dataAccess.GetCollection(jobQueueCol)
+	pcol := dataAccess.GetCollection(postponedJobCol)
+	index := mgo.Index{
+		Key:        []string{"unique_id"},
+		Unique:     true,
+		DropDups:   true,
+		Background: true,
+		Sparse:     true,
+	}
+	err = col.EnsureIndex(index)
+	if err != nil {
+		modelLogger.Warning("Failed to create index on JobQueue Collections")
+	}
+	err = pcol.EnsureIndex(index)
+	if err != nil {
+		modelLogger.Warning("Failed to create index on Postponed JobQueue Collections")
+	}
 }
 
 // JobQueue holds information about job function name
 // and its params
 type JobQueue struct {
-	ID     bson.ObjectId          `json:"id" bson:"_id,omitempty"`
-	Name   string                 `json:"name" bson:"name"`
-	Params map[string]interface{} `json:"params" bson:"params"`
+	ID       bson.ObjectId          `json:"id" bson:"_id,omitempty"`
+	Name     string                 `json:"name" bson:"name"`
+	Params   map[string]interface{} `json:"params" bson:"params"`
+	UniqueID string                 `json:"unique_id" bson:"unique_id"`
+}
+
+func sortedKeys(params map[string]interface{}) []string {
+	var keys []string
+	for k := range params {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
+}
+
+// GenerateUniqueID of JobQueue
+func (jq *JobQueue) GenerateUniqueID() {
+	keys := sortedKeys(jq.Params)
+	var sb strings.Builder
+	fmt.Println(sb.WriteString(jq.Name))
+	for _, k := range keys {
+		v := jq.Params[k]
+		sb.WriteString("::")
+		sb.WriteString(k)
+		sb.WriteString(":")
+		sb.WriteString(v.(string))
+	}
+	jq.UniqueID = sb.String()
 }
 
 // NewJobQueue return new JobQueue instance
@@ -49,6 +97,7 @@ func Save(jq *JobQueue) bool {
 	dataAccess := base.NewDataAccess()
 	defer dataAccess.Close()
 	col := dataAccess.GetCollection(jobQueueCol)
+	jq.GenerateUniqueID()
 	err := col.Insert(&jq)
 	if err == nil {
 		modelLogger.Info(fmt.Sprintf("Success to create JobQueue with name: %v", jq.Name))
@@ -103,7 +152,7 @@ func PostponeJobQueue(jobQueue *JobQueue) bool {
 		modelLogger.Info(fmt.Sprintf("Success to postpone JobQueue with name: %v", jobQueue.Name))
 		return true
 	}
-	modelLogger.Info(fmt.Sprintf("Failed to postpone JobQueue with name: %v", jobQueue.Name))
+	modelLogger.Info(fmt.Sprintf("Failed to postpone JobQueue with name: %v cause: %v", jobQueue.Name, err))
 	return false
 }
 
