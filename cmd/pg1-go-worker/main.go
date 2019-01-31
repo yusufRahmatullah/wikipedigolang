@@ -26,10 +26,12 @@ func init() {
 	updaterJob := igProfileJob.NewUpdaterJob()
 	multiAccountJob := igProfileJob.NewMultiAccountJob()
 	postExtractorJob := igPostJob.NewPostExtractionJob()
+	banAccountJob := igProfileJob.NewBanAccountJob()
 	jobAssigner.Register(singleAccountJob)
 	jobAssigner.Register(updaterJob)
 	jobAssigner.Register(multiAccountJob)
 	jobAssigner.Register(postExtractorJob)
+	jobAssigner.Register(banAccountJob)
 }
 
 func getWaitTime() int {

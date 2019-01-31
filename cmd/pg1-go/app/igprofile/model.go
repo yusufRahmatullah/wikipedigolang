@@ -22,6 +22,7 @@ func init() {
 	dataAccess := base.NewDataAccess()
 	defer dataAccess.Close()
 	col := dataAccess.GetCollection(igProfileCol)
+	dcol := dataAccess.GetCollection(deletedIDCol)
 	idIndex := mgo.Index{
 		Key:        []string{"ig_id"},
 		Unique:     true,
@@ -31,7 +32,11 @@ func init() {
 	}
 	err := col.EnsureIndex(idIndex)
 	if err != nil {
-		modelLogger.Warning("Failed to create index")
+		modelLogger.Warning("Failed to create index on ig_profile")
+	}
+	err = dcol.EnsureIndex(idIndex)
+	if err != nil {
+		modelLogger.Warning("Failed to create index on deleted_ig_id")
 	}
 }
 
