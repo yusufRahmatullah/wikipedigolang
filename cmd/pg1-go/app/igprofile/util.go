@@ -3,6 +3,7 @@ package igprofile
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"regexp"
 	"strings"
 
@@ -21,9 +22,19 @@ func init() {
 
 // FetchIgProfile to fetch Ig Profile information from IG
 func FetchIgProfile(igID string) *IgProfile {
+	igID = strings.Trim(igID, " ")
+	if igID == "" {
+		utilLogger.Fatal("IG ID cannot be empty")
+		return nil
+	}
 	r := req.New()
 	resp, err := r.Get(fmt.Sprintf("https://www.instagram.com/%s", igID))
 	if err == nil {
+		code := resp.Response().StatusCode
+		if code == http.StatusNotFound {
+			utilLogger.Fatal(fmt.Sprintf("IG ID %v not exist", igID))
+			return nil
+		}
 		bodyText := resp.String()
 		matches := matcher.FindStringSubmatch(bodyText)
 		if len(matches) < 2 {
