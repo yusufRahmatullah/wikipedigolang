@@ -124,7 +124,7 @@ func GetAll() []JobQueue {
 	var jobQueues []JobQueue
 	err := col.Find(nil).Limit(JobLimit).All(&jobQueues)
 	if err != nil {
-		modelLogger.Fatal("Failed to get all JobQueue")
+		modelLogger.Fatal("Failed to get all JobQueue", err)
 	}
 	return jobQueues
 }
@@ -192,7 +192,7 @@ func GetAllPostponed() []JobQueue {
 	var jobQueues []JobQueue
 	err := col.Find(nil).Limit(JobLimit).All(&jobQueues)
 	if err != nil {
-		modelLogger.Fatal("Failed to get all JobQueue")
+		modelLogger.Fatal("Failed to get all JobQueue", err)
 	}
 	return jobQueues
 }

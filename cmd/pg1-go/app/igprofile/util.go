@@ -24,11 +24,11 @@ func init() {
 func FetchIgProfile(igID string) *IgProfile {
 	igID = strings.Trim(igID, " ")
 	if igID == "" {
-		utilLogger.Fatal("IG ID cannot be empty")
+		utilLogger.Fatal("IG ID cannot be empty", nil)
 		return nil
 	}
 	if isBanned(igID) {
-		utilLogger.Fatal(fmt.Sprintf("IG ID %v is banned", igID))
+		utilLogger.Fatal(fmt.Sprintf("IG ID %v is banned", igID), nil)
 		return nil
 	}
 	r := req.New()
@@ -36,25 +36,25 @@ func FetchIgProfile(igID string) *IgProfile {
 	if err == nil {
 		code := resp.Response().StatusCode
 		if code == http.StatusNotFound {
-			utilLogger.Fatal(fmt.Sprintf("IG ID %v not exist", igID))
+			utilLogger.Fatal(fmt.Sprintf("IG ID %v not exist", igID), err)
 			return nil
 		}
 		bodyText := resp.String()
 		matches := matcher.FindStringSubmatch(bodyText)
 		if len(matches) < 2 {
-			utilLogger.Fatal(fmt.Sprintf("Failed to match sharedData on IG ID: %s", igID))
+			utilLogger.Fatal(fmt.Sprintf("Failed to match sharedData on IG ID: %s", igID), err)
 			return nil
 		}
 		sharedData := matches[1]
 		if sharedData == "" {
-			utilLogger.Fatal("sharedData is empty")
+			utilLogger.Fatal("sharedData is empty", nil)
 			return nil
 		}
 		sharedData = sharedData[:len(sharedData)-1]
 		var data map[string]interface{}
 		json.Unmarshal([]byte(sharedData), &data)
 		if data == nil {
-			utilLogger.Fatal(fmt.Sprintf("Failed to parse sharedData on IG ID: %s", igID))
+			utilLogger.Fatal(fmt.Sprintf("Failed to parse sharedData on IG ID: %s", igID), err)
 			return nil
 		}
 		entryData := data["entry_data"].(map[string]interface{})
@@ -76,7 +76,7 @@ func FetchIgProfile(igID string) *IgProfile {
 		builder = builder.SetFollowing(following).SetPosts(postsCount).SetPpURL(ppHD)
 		return builder.Build()
 	}
-	utilLogger.Fatal(fmt.Sprintf("Failed to fetch IG ID: %s", igID))
+	utilLogger.Fatal(fmt.Sprintf("Failed to fetch IG ID: %s", igID), err)
 	return nil
 }
 

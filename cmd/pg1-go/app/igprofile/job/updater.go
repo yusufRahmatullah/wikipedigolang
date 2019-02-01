@@ -34,7 +34,7 @@ func updateIgID(igp *igprofile.IgProfile) {
 		if suc {
 			ujLogger.Debug(fmt.Sprintf("Success to update IG ID: %v", igID))
 		} else {
-			ujLogger.Fatal(fmt.Sprintf("Failed to update IG ID: %v", igID))
+			ujLogger.Fatal(fmt.Sprintf("Failed to update IG ID: %v", igID), nil)
 		}
 	}
 }

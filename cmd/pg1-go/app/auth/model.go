@@ -54,7 +54,7 @@ func init() {
 	// Create superadmin
 	sapass := os.Getenv("SUPER_ADMIN")
 	if sapass == "" {
-		modelLogger.Error("$SUPER_ADMIN must be set")
+		modelLogger.Error("$SUPER_ADMIN must be set", nil)
 	}
 	superAdmin := NewUser("superadmin", sapass)
 	superAdmin.Role = adminRole
@@ -73,7 +73,7 @@ func hashAndSalt(pwd []byte) string {
 	// than the MinCost (4)
 	hash, err := bcrypt.GenerateFromPassword(pwd, bcrypt.MinCost)
 	if err != nil {
-		modelLogger.Fatal(fmt.Sprintf("Failed to generate hash from password cause: %v", err))
+		modelLogger.Fatal(fmt.Sprintf("Failed to generate hash from password"), err)
 	}
 
 	// GenerateFromPassword returns a byte slice so we need to

@@ -66,7 +66,7 @@ func main() {
 	err := utils.DefaultProcess.Open()
 	defer utils.DefaultProcess.Close()
 	if err != nil {
-		mainLogger.Error("Failed to open phantomjs process")
+		mainLogger.Error("Failed to open phantomjs process", err)
 	}
 	consumeJobs(getWaitTime())
 }

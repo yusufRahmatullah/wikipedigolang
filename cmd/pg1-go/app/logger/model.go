@@ -19,6 +19,7 @@ type dbLogs struct {
 	Name      string        `json:"name" bson:"name"`
 	Level     string        `json:"level" bson:"level"`
 	Message   string        `json:"message" bson:"message"`
+	Cause     string        `json:"cause" bson:"cause"`
 }
 
 // Logger has objective to write logs to command line and database
@@ -64,6 +65,10 @@ func logToStdOut(level, name, message string) {
 	log.Printf("[%v] %v: %v\n", level, name, message)
 }
 
+func errToStdOut(level, name, message string, err error) {
+	log.Printf("[%v] %v: %v cause: %v\n", level, name, message, err)
+}
+
 func logToDB(level, name, message string) {
 	dataAccess := base.NewDataAccess()
 	defer dataAccess.Close()
@@ -79,9 +84,33 @@ func logToDB(level, name, message string) {
 	}
 }
 
+func errToDB(level, name, message string, err error) {
+	dataAccess := base.NewDataAccess()
+	defer dataAccess.Close()
+	col := dataAccess.GetCollection(logsCol)
+	cause := err.Error()
+	if err == nil {
+		cause = ""
+	}
+	ierr := col.Insert(&dbLogs{
+		CreatedAt: time.Now(),
+		Name:      name,
+		Level:     level,
+		Message:   message,
+		Cause:     cause,
+	})
+	if ierr != nil {
+		logToStdOut("WARN", name, "Cannot write to database")
+	}
+}
+
+func isDebug() bool {
+	return ginMode == "debug"
+}
+
 // Debug force print logs to Stdout if GIN_MODE is not release
 func (lg *Logger) Debug(msg string) {
-	if ginMode == "debug" {
+	if isDebug() {
 		logToStdOut("DEBUG", lg.Name, msg)
 	}
 }
@@ -92,7 +121,8 @@ func (lg *Logger) Info(msg string) {
 	if lg.IsToStdOut {
 		logToStdOut("INFO", lg.Name, msg)
 	}
-	if lg.IsToDB {
+	// info level will not be used on release version
+	if lg.IsToDB && !isDebug() {
 		logToDB("INFO", lg.Name, msg)
 	}
 }
@@ -107,15 +137,15 @@ func (lg *Logger) Warning(msg string) {
 }
 
 // Fatal force print logs to StdOut and database
-func (lg *Logger) Fatal(msg string) {
-	logToStdOut("FATAL", lg.Name, msg)
-	logToDB("FATAL", lg.Name, msg)
+func (lg *Logger) Fatal(msg string, err error) {
+	errToStdOut("FATAL", lg.Name, msg, err)
+	errToDB("FATAL", lg.Name, msg, err)
 }
 
 // Error force print logs to StdOut and database
 // and stop the programs
-func (lg *Logger) Error(msg string) {
-	logToStdOut("FATAL", lg.Name, msg)
-	logToDB("FATAL", lg.Name, msg)
+func (lg *Logger) Error(msg string, err error) {
+	errToStdOut("ERROR", lg.Name, msg, err)
+	errToDB("ERROR", lg.Name, msg, err)
 	panic(msg)
 }

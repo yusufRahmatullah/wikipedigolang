@@ -3,11 +3,6 @@ package job
 import (
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/igprofile"
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/jobqueue"
-	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/logger"
-)
-
-var (
-	banLogger = logger.NewLogger("BanAccountJob", true, true)
 )
 
 // BanAccountJob is the job to ban an account

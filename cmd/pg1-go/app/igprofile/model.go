@@ -153,7 +153,7 @@ func GetAll(offset, limit int, sortBy ...string) []IgProfile {
 	if err == nil {
 		modelLogger.Debug("Success to get all IgProfile")
 	} else {
-		modelLogger.Fatal("Failed to get all IgProfiles")
+		modelLogger.Fatal("Failed to get all IgProfiles", err)
 	}
 	return igps
 }
@@ -192,7 +192,7 @@ func FindIgProfile(query string, offset, limit int, sortBy ...string) []IgProfil
 	if err == nil {
 		modelLogger.Debug(fmt.Sprintf("Success to find IgProfile with query: %v", query))
 	} else {
-		modelLogger.Fatal(fmt.Sprintf("Failed to find IgProfile with query: %v", query))
+		modelLogger.Fatal(fmt.Sprintf("Failed to find IgProfile with query: %v", query), err)
 	}
 	return igps
 }

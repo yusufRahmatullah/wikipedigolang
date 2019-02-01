@@ -40,7 +40,7 @@ func NewWebPageWrapper(mLogger *logger.Logger) *WebPageWrapper {
 	if err == nil {
 		return &WebPageWrapper{page: page, mLogger: mLogger}
 	}
-	mLogger.Fatal(fmt.Sprintf("Failed to create page. Causes: %v", err))
+	mLogger.Fatal(fmt.Sprintf("Failed to create page."), err)
 	return nil
 }
 
@@ -64,7 +64,7 @@ func (ww *WebPageWrapper) OpenURL(url string) {
 			opol()
 		}
 	} else {
-		ww.mLogger.Fatal(fmt.Sprintf("Failed to open URL: %v", url))
+		ww.mLogger.Fatal(fmt.Sprintf("Failed to open URL: %v", url), err)
 		ww.callOnError(err)
 	}
 }
@@ -80,7 +80,7 @@ func (ww *WebPageWrapper) Evaluate(js string) {
 	info, err := ww.page.Evaluate(js)
 	if err == nil {
 		if info == nil {
-			ww.mLogger.Fatal("Failed, info is nil")
+			ww.mLogger.Fatal("Failed, info is nil", nil)
 		} else {
 			data := info.(map[string]interface{})
 			for _, oel := range ww.onEvaluatedListeners {
@@ -88,7 +88,7 @@ func (ww *WebPageWrapper) Evaluate(js string) {
 			}
 		}
 	} else {
-		ww.mLogger.Fatal(fmt.Sprintf("Failed to execute JS. Causes: %v", err))
+		ww.mLogger.Fatal(fmt.Sprintf("Failed to execute JS."), err)
 		ww.callOnError(err)
 	}
 }
@@ -107,7 +107,7 @@ func (ww *WebPageWrapper) EvaluateAsync(js string) {
 			oael()
 		}
 	} else {
-		ww.mLogger.Fatal(fmt.Sprintf("Failed to execute async script. Causes: %v", err))
+		ww.mLogger.Fatal(fmt.Sprintf("Failed to execute async script."), err)
 		ww.callOnError(err)
 	}
 }

@@ -36,7 +36,7 @@ func main() {
 	port := os.Getenv("PORT")
 
 	if port == "" {
-		mainLogger.Error("$PORT must be set")
+		mainLogger.Error("$PORT must be set", nil)
 	}
 
 	sessionSecret := os.Getenv("SESSION_SECRET")

@@ -88,7 +88,7 @@ func login(c *gin.Context) {
 				data := base.StandardJSON("Success", nil)
 				c.JSON(http.StatusOK, data)
 			} else {
-				handleLogger.Fatal("Failed to save session")
+				handleLogger.Fatal("Failed to save session", err)
 				data := base.ErrorJSON("Failed to save session", nil)
 				c.JSON(http.StatusNotModified, data)
 			}

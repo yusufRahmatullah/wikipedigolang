@@ -79,7 +79,7 @@ func GetAll(offset, limit int) []IgPost {
 	if err == nil {
 		modelLogger.Debug("Success to get all IgPost")
 	} else {
-		modelLogger.Fatal("Failed to get all IgPost")
+		modelLogger.Fatal("Failed to get all IgPost", err)
 	}
 	return ips
 }
