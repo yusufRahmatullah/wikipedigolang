@@ -124,7 +124,7 @@ func (lg *Logger) Info(msg string) {
 		logToStdOut("INFO", lg.Name, msg)
 	}
 	// info level will not be used on release version
-	if lg.IsToDB && !isDebug() {
+	if lg.IsToDB && isDebug() {
 		logToDB("INFO", lg.Name, msg)
 	}
 }
