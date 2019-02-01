@@ -83,7 +83,7 @@ func sortedKeys(params map[string]interface{}) []string {
 func (jq *JobQueue) GenerateUniqueID() {
 	keys := sortedKeys(jq.Params)
 	var sb strings.Builder
-	fmt.Println(sb.WriteString(jq.Name))
+	sb.WriteString(jq.Name)
 	for _, k := range keys {
 		v := jq.Params[k]
 		sb.WriteString("::")

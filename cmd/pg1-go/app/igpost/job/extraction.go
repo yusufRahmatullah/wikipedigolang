@@ -54,9 +54,10 @@ func processExtractedAccounts(data map[string]interface{}) {
 	for _, word := range words {
 		if strings.HasPrefix(word, "@") {
 			acc := word[1:]
-			extLogger.Debug(fmt.Sprintf("Founc IG ID: %v", acc))
+			cleanAccount := strings.Split(acc, "\n")[0]
+			extLogger.Debug(fmt.Sprintf("Founc IG ID: %v", cleanAccount))
 			jq := jobqueue.NewJobQueue("SingleAccountJob", map[string]interface{}{
-				"ig_id": acc,
+				"ig_id": cleanAccount,
 			})
 			jobqueue.Save(jq)
 		}
