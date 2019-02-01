@@ -14,6 +14,7 @@ import (
 const (
 	deletedIDCol = "deleted_ig_id"
 	igProfileCol = "ig_profile"
+	multiAccCol  = "multi_account"
 )
 
 var modelLogger = logger.NewLogger("IGProfile", true, true)
@@ -289,4 +290,72 @@ func (bd *Builder) SetPosts(posts int) *Builder {
 func (bd *Builder) SetPpURL(ppURL string) *Builder {
 	bd.PpURL = ppURL
 	return bd
+}
+
+// MultiAcc holds IG ID that can be used for MultiAccountJob
+type MultiAcc struct {
+	ID     string `bson:"_id,omitempty" json:"id"`
+	Active bool   `bson:"active" json:"active"`
+}
+
+// SaveMultiAcc to save IG ID which has been called by MultiAccountJob
+// returns true if success
+func SaveMultiAcc(iid string) bool {
+	dataAccess := base.NewDataAccess()
+	defer dataAccess.Close()
+	col := dataAccess.GetCollection(multiAccCol)
+	var mac MultiAcc
+	err := col.FindId(iid).One(&mac)
+	if err != nil {
+		modelLogger.Warning(fmt.Sprintf("Cannot find multi account: %v cause: %v", iid, err))
+	}
+	if mac.ID != "" {
+		if !mac.Active {
+			err = col.Update(bson.M{"_id": iid}, bson.M{"$set": bson.M{"active": true}})
+			if err != nil {
+				modelLogger.Fatal(fmt.Sprintf("Cannot save multi account: %v", iid), err)
+				return false
+			}
+			return true
+		}
+		return true
+	}
+	err = col.Insert(&MultiAcc{ID: iid, Active: true})
+	if err != nil {
+		modelLogger.Fatal(fmt.Sprintf("Cannot save multi account: %v", iid), err)
+		return false
+	}
+	return true
+}
+
+// FindMultiAcc returns all availables multi accounts
+func FindMultiAcc(query string, offset, limit int) []MultiAcc {
+	dataAccess := base.NewDataAccess()
+	defer dataAccess.Close()
+	col := dataAccess.GetCollection(multiAccCol)
+	var mas []MultiAcc
+	err := col.Find(bson.M{
+		"_id": bson.M{"$regex": query, "$options": "i"},
+	}).Skip(offset).Limit(limit).All(&mas)
+	if err != nil {
+		modelLogger.Fatal(fmt.Sprintf("Failed to find multi accounts with query: %v", query), err)
+	}
+	return mas
+}
+
+// DeleteMultiAcc deactivate MultiAcc instance
+// returns true if success
+func DeleteMultiAcc(iid string) bool {
+	dataAccess := base.NewDataAccess()
+	defer dataAccess.Close()
+	col := dataAccess.GetCollection(multiAccCol)
+	var mac MultiAcc
+	err := col.Find(bson.M{"_id": iid, "active": true}).One(&mac)
+	if err == nil || mac.ID != "" {
+		err = col.Update(bson.M{"_id": iid}, bson.M{"$set": bson.M{"active": false}})
+		if err == nil {
+			return true
+		}
+	}
+	return false
 }

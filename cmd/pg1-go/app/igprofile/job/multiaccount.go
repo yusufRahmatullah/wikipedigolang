@@ -115,6 +115,8 @@ func (job *MultiAccountJob) Process(jq *jobqueue.JobQueue) bool {
 	igID, ok := params["ig_id"]
 	if ok {
 		cleanID := igprofile.CleanIgIDParams(igID.(string))
+		suc := igprofile.SaveMultiAcc(cleanID)
+		majLogger.Info(fmt.Sprintf("Save multi account: %v", suc))
 		crawlMultiIgID(cleanID)
 	} else {
 		majLogger.Info("Param ig_id not found")

@@ -141,10 +141,58 @@ func deleteIgProfileHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, data)
 }
 
+func activateMultiAccHandler(c *gin.Context) {
+	iid := c.Param("ig_id")
+	suc := SaveMultiAcc(iid)
+	var msg string
+	if suc {
+		msg = "Save MultiAcc successful"
+	} else {
+		msg = "Failed to save MultiAcc"
+	}
+	data := base.StandardJSON(msg, nil)
+	c.JSON(http.StatusOK, data)
+}
+
+func findMultiAccHandler(c *gin.Context) {
+	offsetStr := c.Query("offset")
+	limitStr := c.Query("limit")
+	query := c.Query("query")
+	offset := convertIntOrDefault(offsetStr, defaultOffset)
+	limit := convertIntOrDefault(limitStr, defaultLimit)
+	mas := FindMultiAcc(query, offset, limit)
+	compData := struct {
+		Accounts []MultiAcc `json:"accounts"`
+		Query    string     `json:"query"`
+	}{
+		Accounts: mas,
+		Query:    query,
+	}
+	data := base.StandardJSON("", compData)
+	c.JSON(http.StatusOK, data)
+}
+
+func deleteMultiAccHandler(c *gin.Context) {
+	iid := c.Param("ig_id")
+	suc := DeleteMultiAcc(iid)
+	var msg string
+	if suc {
+		msg = "Delete MultiAcc successful"
+	} else {
+		msg = "Failed to delete MultiAcc"
+	}
+	data := base.StandardJSON(msg, nil)
+	c.JSON(http.StatusOK, data)
+}
+
 /////////////////////////////////
 // IgProfile Views
 /////////////////////////////////
 
 func igProfilesView(c *gin.Context) {
 	c.HTML(http.StatusOK, "igprofiles.tmpl.html", nil)
+}
+
+func multiAccView(c *gin.Context) {
+	c.HTML(http.StatusOK, "multi_acc.tmpl.html", nil)
 }
