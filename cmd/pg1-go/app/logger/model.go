@@ -88,10 +88,12 @@ func errToDB(level, name, message string, err error) {
 	dataAccess := base.NewDataAccess()
 	defer dataAccess.Close()
 	col := dataAccess.GetCollection(logsCol)
-	cause := err.Error()
-	if err == nil {
-		cause = ""
+	cause := ""
+	if err =! nil {
+		cause = err.Error()
 	}
+		
+	
 	ierr := col.Insert(&dbLogs{
 		CreatedAt: time.Now(),
 		Name:      name,
