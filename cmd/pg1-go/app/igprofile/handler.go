@@ -117,7 +117,14 @@ func findIgProfileHandler(c *gin.Context) {
 	limit := convertIntOrDefault(limitStr, defaultLimit)
 	sort := generateSortOrder(c)
 	igps := FindIgProfile(query, offset, limit, sort)
-	data := base.StandardJSON("", igps)
+	compData := struct {
+		Profiles []IgProfile `json:"profiles"`
+		Query    string      `json:"query"`
+	}{
+		Profiles: igps,
+		Query:    query,
+	}
+	data := base.StandardJSON("", compData)
 	c.JSON(http.StatusOK, data)
 }
 
