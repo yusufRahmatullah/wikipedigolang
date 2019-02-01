@@ -14,7 +14,7 @@ import (
 
 const (
 	defaultOffset = 0
-	defaultLimit  = 20
+	defaultLimit  = 24
 )
 
 var handlerLogger = logger.NewLogger("IgProfileHandler", false, true)
