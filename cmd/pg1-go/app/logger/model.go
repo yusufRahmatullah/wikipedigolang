@@ -89,7 +89,7 @@ func errToDB(level, name, message string, err error) {
 	defer dataAccess.Close()
 	col := dataAccess.GetCollection(logsCol)
 	cause := ""
-	if err =! nil {
+	if err != nil {
 		cause = err.Error()
 	}
 		
