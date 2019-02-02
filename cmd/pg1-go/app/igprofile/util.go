@@ -27,10 +27,6 @@ func FetchIgProfile(igID string) *IgProfile {
 		utilLogger.Fatal("IG ID cannot be empty", nil)
 		return nil
 	}
-	if isBanned(igID) {
-		utilLogger.Fatal(fmt.Sprintf("IG ID %v is banned", igID), nil)
-		return nil
-	}
 	r := req.New()
 	resp, err := r.Get(fmt.Sprintf("https://www.instagram.com/%s", igID))
 	if err == nil {

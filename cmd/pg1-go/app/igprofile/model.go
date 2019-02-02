@@ -11,10 +11,23 @@ import (
 	"github.com/globalsign/mgo/bson"
 )
 
+// ProfileStatus is a status of IgProfile
+type ProfileStatus string
+
 const (
-	deletedIDCol = "deleted_ig_id"
 	igProfileCol = "ig_profile"
-	multiAccCol  = "multi_account"
+	// StatusActive means the IgProfile will be shown
+	StatusActive ProfileStatus = "active"
+	// StatusBanned means the IgProfile will not be shown
+	StatusBanned ProfileStatus = "banned"
+	// StatusMulti means the IgProfile will be shown on MultiAcc page
+	// as active Multi Account
+	StatusMulti ProfileStatus = "multi"
+	// StatusBannedMulti means IgProfile will be shown on MultiAcc page
+	// as inactive Multi Account
+	StatusBannedMulti ProfileStatus = "banned_multi"
+	// StatusAll means all IgProfile will be shown
+	StatusAll ProfileStatus = ""
 )
 
 var modelLogger = logger.NewLogger("IGProfile", true, true)
@@ -23,7 +36,6 @@ func init() {
 	dataAccess := base.NewDataAccess()
 	defer dataAccess.Close()
 	col := dataAccess.GetCollection(igProfileCol)
-	dcol := dataAccess.GetCollection(deletedIDCol)
 	idIndex := mgo.Index{
 		Key:        []string{"ig_id"},
 		Unique:     true,
@@ -33,11 +45,7 @@ func init() {
 	}
 	err := col.EnsureIndex(idIndex)
 	if err != nil {
-		modelLogger.Warning("Failed to create index on ig_profile")
-	}
-	err = dcol.EnsureIndex(idIndex)
-	if err != nil {
-		modelLogger.Warning("Failed to create index on deleted_ig_id")
+		modelLogger.Warning(fmt.Sprintf("Failed to create index on %v", igProfileCol))
 	}
 }
 
@@ -54,20 +62,12 @@ type IgProfile struct {
 	Following  int           `json:"following" bson:"following"`
 	Posts      int           `json:"posts" bson:"posts"`
 	PpURL      string        `json:"pp_url" bson:"pp_url"`
+	Status     ProfileStatus `josn:"status" bson:"status"`
 }
 
 func (model *IgProfile) initTime() {
 	model.CreatedAt = time.Now()
 	model.ModifiedAt = time.Now()
-}
-
-func isBanned(igID string) bool {
-	dataAccess := base.NewDataAccess()
-	defer dataAccess.Close()
-	delCol := dataAccess.GetCollection(deletedIDCol)
-	var exsIgp IgProfile
-	delCol.Find(bson.M{"ig_id": igID}).One(&exsIgp)
-	return exsIgp.IGID != ""
 }
 
 // Save writes IgProfile instance to database
@@ -76,10 +76,6 @@ func Save(igp *IgProfile) bool {
 	dataAccess := base.NewDataAccess()
 	defer dataAccess.Close()
 	col := dataAccess.GetCollection(igProfileCol)
-	if isBanned(igp.IGID) {
-		modelLogger.Info(fmt.Sprintf("Failed to create IgProfile because IG ID: %v was banned", igp.IGID))
-		return false
-	}
 	igp.initTime()
 	err := col.Insert(igp)
 	if err == nil {
@@ -126,6 +122,9 @@ func GenerateChanges(igp *IgProfile) map[string]interface{} {
 	if igp.PpURL != "" {
 		changes["pp_url"] = igp.PpURL
 	}
+	if igp.Status != "" {
+		changes["status"] = igp.Status
+	}
 	return changes
 }
 
@@ -142,7 +141,8 @@ func SaveOrUpdate(igp *IgProfile) bool {
 
 // GetAll returns All IgProfile in database
 // Require offset and limit number for pagination
-func GetAll(offset, limit int, sortBy ...string) []IgProfile {
+// Require status to define what status of the Profile
+func GetAll(offset, limit int, status ProfileStatus, sortBy ...string) []IgProfile {
 	dataAccess := base.NewDataAccess()
 	defer dataAccess.Close()
 	col := dataAccess.GetCollection(igProfileCol)
@@ -150,7 +150,9 @@ func GetAll(offset, limit int, sortBy ...string) []IgProfile {
 	if len(sortBy) == 0 {
 		sortBy = []string{"_id"}
 	}
-	err := col.Find(nil).Sort(sortBy...).Skip(offset).Limit(limit).All(&igps)
+	err := col.Find(bson.M{
+		"status": bson.M{"$regex": status, "$options": "i"},
+	}).Sort(sortBy...).Skip(offset).Limit(limit).All(&igps)
 	if err == nil {
 		modelLogger.Debug("Success to get all IgProfile")
 	} else {
@@ -176,7 +178,8 @@ func GetIgProfile(igID string) *IgProfile {
 
 // FindIgProfile find IgProfiles in database by its IGID or name
 // Require offset and limit number for pagination
-func FindIgProfile(query string, offset, limit int, sortBy ...string) []IgProfile {
+// Require status to define
+func FindIgProfile(query string, offset, limit int, status ProfileStatus, sortBy ...string) []IgProfile {
 	dataAccess := base.NewDataAccess()
 	defer dataAccess.Close()
 	col := dataAccess.GetCollection(igProfileCol)
@@ -189,6 +192,7 @@ func FindIgProfile(query string, offset, limit int, sortBy ...string) []IgProfil
 			bson.M{"ig_id": bson.M{"$regex": query, "$options": "i"}},
 			bson.M{"name": bson.M{"$regex": query, "$options": "i"}},
 		},
+		"status": bson.M{"$regex": status, "$options": "i"},
 	}).Sort(sortBy...).Skip(offset).Limit(limit).All(&igps)
 	if err == nil {
 		modelLogger.Debug(fmt.Sprintf("Success to find IgProfile with query: %v", query))
@@ -201,24 +205,17 @@ func FindIgProfile(query string, offset, limit int, sortBy ...string) []IgProfil
 // DeleteIgProfile removes IgProfile instance from database by its IGID
 // and add the deleted IG ID to another database
 // returns true if success
-func DeleteIgProfile(igID string) bool {
-	dataAccess := base.NewDataAccess()
-	defer dataAccess.Close()
-	ipCol := dataAccess.GetCollection(igProfileCol)
-	delCol := dataAccess.GetCollection(deletedIDCol)
-	igp := GetIgProfile(igID)
-	err := ipCol.RemoveId(igp.ID)
-	if err != nil {
-		modelLogger.Info(fmt.Sprintf("Failed to delete IgProfile with IG ID: %v", igp.IGID))
-		return false
+func DeleteIgProfile(igID string, isMulti bool) bool {
+	status := StatusBanned
+	if isMulti {
+		status = StatusBannedMulti
 	}
-	igp.ID = ""
-	delCol.Insert(igp)
-	if err == nil {
-		modelLogger.Info(fmt.Sprintf("Success to delete IgProfile with IG ID: %v", igp.IGID))
+	suc := Update(igID, bson.M{"status": status})
+	if suc {
+		modelLogger.Info(fmt.Sprintf("Success to delete IgProfile with IG ID: %v", igID))
 		return true
 	}
-	modelLogger.Info(fmt.Sprintf("Failed to move deleted IgProfile with IG ID: %v", igp.IGID))
+	modelLogger.Info(fmt.Sprintf("Failed to delete IgProfile with IG ID: %v", igID))
 	return false
 }
 
@@ -230,6 +227,7 @@ type Builder struct {
 	Following int
 	Posts     int
 	PpURL     string
+	Status    ProfileStatus
 }
 
 // NewBuilder instante new IgProgile Builder
@@ -241,6 +239,7 @@ func NewBuilder() *Builder {
 		Following: 0,
 		Posts:     0,
 		PpURL:     "",
+		Status:    StatusActive,
 	}
 }
 
@@ -253,6 +252,7 @@ func (bd *Builder) Build() *IgProfile {
 		Following: bd.Following,
 		Posts:     bd.Posts,
 		PpURL:     bd.PpURL,
+		Status:    bd.Status,
 	}
 }
 
@@ -292,70 +292,8 @@ func (bd *Builder) SetPpURL(ppURL string) *Builder {
 	return bd
 }
 
-// MultiAcc holds IG ID that can be used for MultiAccountJob
-type MultiAcc struct {
-	ID     string `bson:"_id,omitempty" json:"id"`
-	Active bool   `bson:"active" json:"active"`
-}
-
-// SaveMultiAcc to save IG ID which has been called by MultiAccountJob
-// returns true if success
-func SaveMultiAcc(iid string) bool {
-	dataAccess := base.NewDataAccess()
-	defer dataAccess.Close()
-	col := dataAccess.GetCollection(multiAccCol)
-	var mac MultiAcc
-	err := col.FindId(iid).One(&mac)
-	if err != nil {
-		modelLogger.Warning(fmt.Sprintf("Cannot find multi account: %v cause: %v", iid, err))
-	}
-	if mac.ID != "" {
-		if !mac.Active {
-			err = col.Update(bson.M{"_id": iid}, bson.M{"$set": bson.M{"active": true}})
-			if err != nil {
-				modelLogger.Fatal(fmt.Sprintf("Cannot save multi account: %v", iid), err)
-				return false
-			}
-			return true
-		}
-		return true
-	}
-	err = col.Insert(&MultiAcc{ID: iid, Active: true})
-	if err != nil {
-		modelLogger.Fatal(fmt.Sprintf("Cannot save multi account: %v", iid), err)
-		return false
-	}
-	return true
-}
-
-// FindMultiAcc returns all availables multi accounts
-func FindMultiAcc(query string, offset, limit int) []MultiAcc {
-	dataAccess := base.NewDataAccess()
-	defer dataAccess.Close()
-	col := dataAccess.GetCollection(multiAccCol)
-	var mas []MultiAcc
-	err := col.Find(bson.M{
-		"_id": bson.M{"$regex": query, "$options": "i"},
-	}).Skip(offset).Limit(limit).All(&mas)
-	if err != nil {
-		modelLogger.Fatal(fmt.Sprintf("Failed to find multi accounts with query: %v", query), err)
-	}
-	return mas
-}
-
-// DeleteMultiAcc deactivate MultiAcc instance
-// returns true if success
-func DeleteMultiAcc(iid string) bool {
-	dataAccess := base.NewDataAccess()
-	defer dataAccess.Close()
-	col := dataAccess.GetCollection(multiAccCol)
-	var mac MultiAcc
-	err := col.Find(bson.M{"_id": iid, "active": true}).One(&mac)
-	if err == nil || mac.ID != "" {
-		err = col.Update(bson.M{"_id": iid}, bson.M{"$set": bson.M{"active": false}})
-		if err == nil {
-			return true
-		}
-	}
-	return false
+// SetStatus set Builder's Status
+func (bd *Builder) SetStatus(status ProfileStatus) *Builder {
+	bd.Status = status
+	return bd
 }

@@ -115,7 +115,9 @@ func (job *MultiAccountJob) Process(jq *jobqueue.JobQueue) bool {
 	igID, ok := params["ig_id"]
 	if ok {
 		cleanID := igprofile.CleanIgIDParams(igID.(string))
-		suc := igprofile.SaveMultiAcc(cleanID)
+		bd := igprofile.NewBuilder()
+		igp := bd.SetIGID(cleanID).SetStatus(igprofile.StatusMulti).Build()
+		suc := igprofile.Save(igp)
 		majLogger.Info(fmt.Sprintf("Save multi account: %v", suc))
 		crawlMultiIgID(cleanID)
 	} else {

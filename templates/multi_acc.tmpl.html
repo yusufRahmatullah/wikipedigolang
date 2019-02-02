@@ -92,36 +92,36 @@
                 cards.forEach(card => {
                     var c = document.createElement('div');
                     c.setAttribute('class', 'card fluid');
-                    c.setAttribute('id', card.id);
+                    c.setAttribute('id', card.ig_id);
 
                     var s1 = document.createElement('div');
                     s1.setAttribute('class', 'section');
 
                     var a = document.createElement('a');
-                    a.setAttribute('href', 'https://www.instagram.com/'+card.id);
+                    a.setAttribute('href', 'https://www.instagram.com/'+card.ig_id);
                     a.setAttribute('target', '_blank')
-                    var active = card.active ? 'active' : 'inactive';
-                    a.innerHTML = '@' + card.id + '('+active+')';
+                    var active = card.status == "multi" ? 'active' : 'inactive';
+                    a.innerHTML = '@' + card.ig_id + '('+active+')';
                     s1.appendChild(a);
 
                     var s2 = document.createElement('div');
                     s2.setAttribute('class', 'section');
 
                     var btnActivate = document.createElement('button');
-                    btnActivate.setAttribute('id', 'active-'+card.id);
-                    btnActivate.setAttribute('data-id', card.id);
+                    btnActivate.setAttribute('id', 'active-'+card.ig_id);
+                    btnActivate.setAttribute('data-id', card.ig_id);
                     btnActivate.setAttribute('onclick', 'activate(this);');
                     btnActivate.innerHTML = 'Activate';
                     s2.appendChild(btnActivate);
 
                     var btnDelete = document.createElement('button');
-                    btnDelete.setAttribute('id', 'delete-'+card.id);
-                    btnDelete.setAttribute('data-id', card.id);
+                    btnDelete.setAttribute('id', 'delete-'+card.ig_id);
+                    btnDelete.setAttribute('data-id', card.ig_id);
                     btnDelete.setAttribute('onclick', 'deleteMultiAcc(this)');
                     btnDelete.innerHTML = 'Delete';
                     s2.appendChild(btnDelete);
 
-                    if (card.active) {
+                    if (card.status == "multi") {
                         btnActivate.setAttribute('disabled', 'disabled');
                         btnActivate.setAttribute('class', 'button');
 

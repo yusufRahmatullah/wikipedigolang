@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/globalsign/mgo/bson"
+
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/logger"
 
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/base"
@@ -60,7 +62,7 @@ func getAllIgProfileHandler(c *gin.Context) {
 	offset := convertIntOrDefault(offsetStr, defaultOffset)
 	limit := convertIntOrDefault(limitStr, defaultLimit)
 	sort := generateSortOrder(c)
-	igps := GetAll(offset, limit, sort)
+	igps := GetAll(offset, limit, StatusActive, sort)
 	data := base.StandardJSON("", igps)
 	c.JSON(http.StatusOK, data)
 }
@@ -116,7 +118,7 @@ func findIgProfileHandler(c *gin.Context) {
 	offset := convertIntOrDefault(offsetStr, defaultOffset)
 	limit := convertIntOrDefault(limitStr, defaultLimit)
 	sort := generateSortOrder(c)
-	igps := FindIgProfile(query, offset, limit, sort)
+	igps := FindIgProfile(query, offset, limit, StatusActive, sort)
 	compData := struct {
 		Profiles []IgProfile `json:"profiles"`
 		Query    string      `json:"query"`
@@ -130,7 +132,7 @@ func findIgProfileHandler(c *gin.Context) {
 
 func deleteIgProfileHandler(c *gin.Context) {
 	igID := c.Param("ig_id")
-	suc := DeleteIgProfile(igID)
+	suc := DeleteIgProfile(igID, false)
 	var msg string
 	if suc {
 		msg = "Delete IgProfile successful"
@@ -143,7 +145,7 @@ func deleteIgProfileHandler(c *gin.Context) {
 
 func activateMultiAccHandler(c *gin.Context) {
 	iid := c.Param("ig_id")
-	suc := SaveMultiAcc(iid)
+	suc := Update(iid, bson.M{"status": StatusMulti})
 	var msg string
 	if suc {
 		msg = "Save MultiAcc successful"
@@ -160,10 +162,11 @@ func findMultiAccHandler(c *gin.Context) {
 	query := c.Query("query")
 	offset := convertIntOrDefault(offsetStr, defaultOffset)
 	limit := convertIntOrDefault(limitStr, defaultLimit)
-	mas := FindMultiAcc(query, offset, limit)
+	sort := generateSortOrder(c)
+	mas := FindIgProfile(query, offset, limit, StatusMulti, sort)
 	compData := struct {
-		Accounts []MultiAcc `json:"accounts"`
-		Query    string     `json:"query"`
+		Accounts []IgProfile `json:"accounts"`
+		Query    string      `json:"query"`
 	}{
 		Accounts: mas,
 		Query:    query,
@@ -174,7 +177,7 @@ func findMultiAccHandler(c *gin.Context) {
 
 func deleteMultiAccHandler(c *gin.Context) {
 	iid := c.Param("ig_id")
-	suc := DeleteMultiAcc(iid)
+	suc := DeleteIgProfile(iid, true)
 	var msg string
 	if suc {
 		msg = "Delete MultiAcc successful"

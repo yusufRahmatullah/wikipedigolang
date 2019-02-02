@@ -48,7 +48,7 @@ func (job *UpdaterJob) Process(jq *jobqueue.JobQueue) bool {
 	var igps []igprofile.IgProfile
 	offset := 0
 	limit := 10
-	igps = igprofile.GetAll(offset, limit)
+	igps = igprofile.GetAll(offset, limit, igprofile.StatusActive)
 	for len(igps) > 0 {
 		ujLogger.Debug(fmt.Sprintf("offset: %v, limit: %v, len(igps): %v", offset, limit, len(igps)))
 		for i, igp := range igps {
@@ -58,7 +58,7 @@ func (job *UpdaterJob) Process(jq *jobqueue.JobQueue) bool {
 		// update igps and offset
 		if len(igps) == limit {
 			offset += limit
-			igps = igprofile.GetAll(offset, limit)
+			igps = igprofile.GetAll(offset, limit, igprofile.StatusActive)
 		} else {
 			break
 		}

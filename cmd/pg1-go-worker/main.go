@@ -7,7 +7,6 @@ import (
 
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/logger"
 
-	igPostJob "git.heroku.com/pg1-go-work/cmd/pg1-go/app/igpost/job"
 	igProfileJob "git.heroku.com/pg1-go-work/cmd/pg1-go/app/igprofile/job"
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/utils"
 
@@ -25,7 +24,7 @@ func init() {
 	singleAccountJob := igProfileJob.NewSingleAccountJob()
 	updaterJob := igProfileJob.NewUpdaterJob()
 	multiAccountJob := igProfileJob.NewMultiAccountJob()
-	postExtractorJob := igPostJob.NewPostExtractionJob()
+	postExtractorJob := igProfileJob.NewPostExtractionJob()
 	banAccountJob := igProfileJob.NewBanAccountJob()
 	jobAssigner.Register(singleAccountJob)
 	jobAssigner.Register(updaterJob)

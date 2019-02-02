@@ -25,7 +25,7 @@ func (job *BanAccountJob) Process(jq *jobqueue.JobQueue) bool {
 	igID, ok := params["ig_id"]
 	if ok {
 		cleanID := igprofile.CleanIgIDParams(igID.(string))
-		return igprofile.DeleteIgProfile(cleanID)
+		return igprofile.DeleteIgProfile(cleanID, false)
 	}
 	return false
 }

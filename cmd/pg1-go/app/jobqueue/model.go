@@ -15,10 +15,17 @@ import (
 	"github.com/globalsign/mgo/bson"
 )
 
+// JobStatus is a status of JobQueue
+type JobStatus string
+
 const (
-	deletedJobCol   = "deleted_job_queue"
-	jobQueueCol     = "job_queue"
-	postponedJobCol = "postponed_job_queue"
+	jobQueueCol = "job_queue"
+	// StatusActive means JobQueue will be executed
+	StatusActive JobStatus = "active"
+	// StatusFinished means JobQueue has been executed
+	StatusFinished JobStatus = "finished"
+	// StatusPostponed means JobQueue will be executed later
+	StatusPostponed JobStatus = "postponed"
 )
 
 var (
@@ -38,8 +45,6 @@ func init() {
 	dataAccess := base.NewDataAccess()
 	defer dataAccess.Close()
 	col := dataAccess.GetCollection(jobQueueCol)
-	pcol := dataAccess.GetCollection(postponedJobCol)
-	dcol := dataAccess.GetCollection(deletedJobCol)
 	index := mgo.Index{
 		Key:        []string{"unique_id"},
 		Unique:     true,
@@ -49,15 +54,7 @@ func init() {
 	}
 	err = col.EnsureIndex(index)
 	if err != nil {
-		modelLogger.Warning("Failed to create index on JobQueue Collections")
-	}
-	err = pcol.EnsureIndex(index)
-	if err != nil {
-		modelLogger.Warning("Failed to create index on Postponed JobQueue Collections")
-	}
-	err = dcol.EnsureIndex(index)
-	if err != nil {
-		modelLogger.Warning("Failed to create index on Deleted JobQueue Collections")
+		modelLogger.Warning(fmt.Sprintf("Failed to create index on %v", jobQueueCol))
 	}
 }
 
@@ -68,6 +65,7 @@ type JobQueue struct {
 	Name     string                 `json:"name" bson:"name"`
 	Params   map[string]interface{} `json:"params" bson:"params"`
 	UniqueID string                 `json:"unique_id" bson:"unique_id"`
+	Status   JobStatus              `json:"status" bson:"status"`
 }
 
 func sortedKeys(params map[string]interface{}) []string {
@@ -115,14 +113,31 @@ func Save(jq *JobQueue) bool {
 	return false
 }
 
-// GetAll returns All JobQueue in database with
+// Update modify JobQueue instance in database
+// returns true if success
+func Update(uid string, changes bson.M) bool {
+	dataAccess := base.NewDataAccess()
+	defer dataAccess.Close()
+	col := dataAccess.GetCollection(jobQueueCol)
+	selector := bson.M{"unique_id": uid}
+	update := bson.M{"$set": changes}
+	err := col.Update(selector, update)
+	if err != nil {
+		modelLogger.Fatal(fmt.Sprintf("Failed to update JobQueue with unique_id: %v", uid), err)
+	}
+	return err == nil
+}
+
+// GetAll returns All active JobQueue in database with
 // maximum records defined by JobLimit
 func GetAll() []JobQueue {
 	dataAccess := base.NewDataAccess()
 	defer dataAccess.Close()
 	col := dataAccess.GetCollection(jobQueueCol)
 	var jobQueues []JobQueue
-	err := col.Find(nil).Limit(JobLimit).All(&jobQueues)
+	err := col.Find(bson.M{
+		"status": StatusActive,
+	}).Limit(JobLimit).All(&jobQueues)
 	if err != nil {
 		modelLogger.Fatal("Failed to get all JobQueue", err)
 	}
@@ -135,7 +150,7 @@ func DeleteJobQueue(jobQueue *JobQueue) bool {
 	dataAccess := base.NewDataAccess()
 	defer dataAccess.Close()
 	col := dataAccess.GetCollection(jobQueueCol)
-	err := col.Remove(bson.M{"_id": jobQueue.ID})
+	err := col.Remove(bson.M{"unique_id": jobQueue.UniqueID})
 	if err == nil {
 		modelLogger.Info(fmt.Sprintf("Success to delete JobQueue with name: %v", jobQueue.Name))
 		return true
@@ -146,39 +161,22 @@ func DeleteJobQueue(jobQueue *JobQueue) bool {
 
 // PostponeJobQueue move the JobQueue to canceled job collections
 // Returns true if postponing JobQueue is successful
-func PostponeJobQueue(jobQueue *JobQueue) bool {
-	dataAccess := base.NewDataAccess()
-	defer dataAccess.Close()
-	col := dataAccess.GetCollection(postponedJobCol)
-	suc := DeleteJobQueue(jobQueue)
-	if !suc {
-		return suc
-	}
-	dcol := dataAccess.GetCollection(deletedJobCol)
-	var delJq JobQueue
-	dcol.Find(bson.M{"unique_id": jobQueue.UniqueID}).One(&delJq)
-	if delJq.ID != "" {
-		return false
-	}
-	jobQueue.ID = ""
-	err := col.Insert(jobQueue)
-	if err == nil {
-		modelLogger.Info(fmt.Sprintf("Success to postpone JobQueue with name: %v", jobQueue.Name))
-		return true
-	}
-	modelLogger.Info(fmt.Sprintf("Failed to postpone JobQueue with name: %v cause: %v", jobQueue.Name, err))
-	return false
+func PostponeJobQueue(uid string) bool {
+	return Update(uid, bson.M{"status": StatusPostponed})
 }
 
 // GetPostponed returns Postponed JobQueue by its id
-func GetPostponed(jid string) *JobQueue {
+func GetPostponed(uid string) *JobQueue {
 	dataAccess := base.NewDataAccess()
 	defer dataAccess.Close()
-	col := dataAccess.GetCollection(postponedJobCol)
+	col := dataAccess.GetCollection(jobQueueCol)
 	var jq JobQueue
-	err := col.FindId(bson.ObjectIdHex(jid)).One(&jq)
+	err := col.FindId(bson.M{
+		"unique_id": uid,
+		"status":    StatusPostponed,
+	}).One(&jq)
 	if err != nil {
-		modelLogger.Info(fmt.Sprintf("Failed to get postponed JobQueue with id: %v", jid))
+		modelLogger.Info(fmt.Sprintf("Failed to get postponed JobQueue with unique_id: %v", uid))
 	}
 	return &jq
 }
@@ -188,9 +186,11 @@ func GetPostponed(jid string) *JobQueue {
 func GetAllPostponed() []JobQueue {
 	dataAccess := base.NewDataAccess()
 	defer dataAccess.Close()
-	col := dataAccess.GetCollection(postponedJobCol)
+	col := dataAccess.GetCollection(jobQueueCol)
 	var jobQueues []JobQueue
-	err := col.Find(nil).Limit(JobLimit).All(&jobQueues)
+	err := col.Find(bson.M{
+		"status": StatusPostponed,
+	}).Limit(JobLimit).All(&jobQueues)
 	if err != nil {
 		modelLogger.Fatal("Failed to get all JobQueue", err)
 	}
@@ -201,20 +201,14 @@ func GetAllPostponed() []JobQueue {
 func DeletePostponed(jq *JobQueue) bool {
 	dataAccess := base.NewDataAccess()
 	defer dataAccess.Close()
-	col := dataAccess.GetCollection(postponedJobCol)
-	err := col.Remove(bson.M{"_id": jq.ID})
-	if err == nil {
-		dcol := dataAccess.GetCollection(deletedJobCol)
-		jq.ID = ""
-		err = dcol.Insert(jq)
-		if err == nil {
-			return true
-		}
-		modelLogger.Info(fmt.Sprintf("Failed to delete postponed JobQueue with uid: %v", jq.UniqueID))
-		return false
+	col := dataAccess.GetCollection(jobQueueCol)
+	selector := bson.M{"unique_id": jq.UniqueID}
+	update := bson.M{"$set": bson.M{"status": StatusFinished}}
+	err := col.Update(selector, update)
+	if err != nil {
+		modelLogger.Fatal(fmt.Sprintf("Failed to delete JobQueue with uid: %v", jq.UniqueID), err)
 	}
-	modelLogger.Info(fmt.Sprintf("Failed to delete JobQueue with uid: %v", jq.UniqueID))
-	return false
+	return err == nil
 }
 
 // RequeuePostponed move postponed JobQueue as new JobQueue

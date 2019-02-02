@@ -101,6 +101,6 @@ func (ja *JobAssigner) ProcessJobQueue(jobQueue *JobQueue) bool {
 	} else {
 		assignerLogger.Info(fmt.Sprintf("%v not exist", name))
 	}
-	PostponeJobQueue(jobQueue)
+	PostponeJobQueue(jobQueue.UniqueID)
 	return false
 }
