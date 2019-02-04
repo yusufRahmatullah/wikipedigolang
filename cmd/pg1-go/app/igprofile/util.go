@@ -63,6 +63,9 @@ func FetchIgProfile(igID string) *IgProfile {
 		edgeFollowed := user["edge_followed_by"].(map[string]interface{})
 		followers := int(edgeFollowed["count"].(float64))
 		name := user["full_name"].(string)
+		if name == "" {
+			name = "@" + igID
+		}
 		posts := user["edge_owner_to_timeline_media"].(map[string]interface{})
 		postsCount := int(posts["count"].(float64))
 		ppHD := user["profile_pic_url_hd"].(string)
