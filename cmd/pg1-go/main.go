@@ -2,7 +2,6 @@ package main
 
 import (
 	"html/template"
-	"net/http"
 	"os"
 
 	"github.com/gin-gonic/contrib/sessions"
@@ -63,11 +62,6 @@ func main() {
 	})
 	router.LoadHTMLGlob("templates/*.tmpl.html")
 	router.Static("/static", "static")
-
-	router.GET("/", func(c *gin.Context) {
-		// c.HTML(http.StatusOK, "index.tmpl.html", nil)
-		c.Redirect(http.StatusTemporaryRedirect, "/igprofiles")
-	})
 
 	jobqueue.DefineViewRoutes(router, "")
 	igprofile.DefineViewRoutes(router, "")

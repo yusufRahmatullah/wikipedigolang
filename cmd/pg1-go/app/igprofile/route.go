@@ -1,6 +1,8 @@
 package igprofile
 
 import (
+	"net/http"
+
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/auth"
 	"github.com/gin-gonic/gin"
 )
@@ -26,7 +28,10 @@ func DefineAPIRoutes(router *gin.RouterGroup) {
 
 // DefineViewRoutes defines routes for IgProfile that contains view
 func DefineViewRoutes(router *gin.Engine, prefix string) {
-	router.GET(prefix+"/igprofiles", igProfilesView)
+	router.GET(prefix+"/", igProfilesView)
+	router.GET(prefix+"/igprofiles", func(c *gin.Context) {
+		c.Redirect(http.StatusPermanentRedirect, "/")
+	})
 
 	reqAdmin := router.Group(prefix)
 	reqAdmin.Use(auth.RequiredAdmin())
