@@ -88,10 +88,12 @@ func errToDB(level, name, message string, err error) {
 	dataAccess := base.NewDataAccess()
 	defer dataAccess.Close()
 	col := dataAccess.GetCollection(logsCol)
-	cause := err.Error()
-	if err == nil {
-		cause = ""
+	cause := ""
+	if err != nil {
+		cause = err.Error()
 	}
+		
+	
 	ierr := col.Insert(&dbLogs{
 		CreatedAt: time.Now(),
 		Name:      name,
@@ -122,7 +124,7 @@ func (lg *Logger) Info(msg string) {
 		logToStdOut("INFO", lg.Name, msg)
 	}
 	// info level will not be used on release version
-	if lg.IsToDB && !isDebug() {
+	if lg.IsToDB && isDebug() {
 		logToDB("INFO", lg.Name, msg)
 	}
 }
