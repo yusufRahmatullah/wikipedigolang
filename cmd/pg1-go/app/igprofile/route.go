@@ -6,17 +6,17 @@ import (
 )
 
 // DefineAPIRoutes defines routes for Ig Profile
-func DefineAPIRoutes(router *gin.Engine, prefix string) {
-	router.GET(prefix+"/igprofiles", getAllIgProfileHandler)
-	router.GET(prefix+"/igprofiles/search", findIgProfileHandler)
-	router.GET(prefix+"/igprofile/:ig_id", getIgProfileHandler)
+func DefineAPIRoutes(router *gin.RouterGroup) {
+	router.GET("/igprofiles", getAllIgProfileHandler)
+	router.GET("/igprofiles/search", findIgProfileHandler)
+	router.GET("/igprofile/:ig_id", getIgProfileHandler)
 
-	reqAdmin := router.Group(prefix)
+	reqAdmin := router.Group("")
 	reqAdmin.Use(auth.RequiredAdmin())
 	{
-		reqAdmin.POST(prefix+"/igprofiles", newIgProfileHandler)
-		reqAdmin.PATCH(prefix+"/igprofile/:ig_id", modifyIgProfileHandler)
-		reqAdmin.DELETE(prefix+"/igprofile/:ig_id", deleteIgProfileHandler)
+		reqAdmin.POST("/igprofiles", newIgProfileHandler)
+		reqAdmin.PATCH("/igprofile/:ig_id", modifyIgProfileHandler)
+		reqAdmin.DELETE("/igprofile/:ig_id", deleteIgProfileHandler)
 
 		reqAdmin.GET("/multi_acc", findMultiAccHandler)
 		reqAdmin.POST("/multi_acc/:ig_id", activateMultiAccHandler)

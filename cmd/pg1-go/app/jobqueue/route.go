@@ -6,8 +6,8 @@ import (
 )
 
 // DefineAPIRoutes defines routes for JobQueue
-func DefineAPIRoutes(router *gin.Engine, prefix string) {
-	reqAdmin := router.Group(prefix)
+func DefineAPIRoutes(router *gin.RouterGroup) {
+	reqAdmin := router.Group("")
 	reqAdmin.Use(auth.RequiredAdmin())
 	{
 		reqAdmin.GET("/available_jobs", getAvailableJobsHandler)

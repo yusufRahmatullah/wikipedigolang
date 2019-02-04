@@ -16,7 +16,7 @@
                 })
                 .then(res => res.json())
                 .then(json => {
-                    if (json.status === 'OK') {
+                    if (json.status === 'OK' && json.data) {
                         json.data.forEach(element => {
                             appendJob(element);
                         });

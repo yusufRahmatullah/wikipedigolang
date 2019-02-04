@@ -69,11 +69,13 @@ func main() {
 		c.Redirect(http.StatusTemporaryRedirect, "/igprofiles")
 	})
 
-	jobqueue.DefineAPIRoutes(router, "api")
 	jobqueue.DefineViewRoutes(router, "")
-	igprofile.DefineAPIRoutes(router, "api")
 	igprofile.DefineViewRoutes(router, "")
 	auth.DefineViewRoutes(router, "")
-	auth.DefineAPIRoutes(router, "api")
+
+	api := router.Group("/api")
+	jobqueue.DefineAPIRoutes(api)
+	igprofile.DefineAPIRoutes(api)
+	auth.DefineAPIRoutes(api)
 	router.Run(":" + port)
 }

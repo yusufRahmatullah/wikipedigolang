@@ -94,7 +94,7 @@ func (jq *JobQueue) GenerateUniqueID() {
 
 // NewJobQueue return new JobQueue instance
 func NewJobQueue(name string, params map[string]interface{}) *JobQueue {
-	return &JobQueue{Name: name, Params: params}
+	return &JobQueue{Name: name, Params: params, Status: StatusActive}
 }
 
 // Save writes JobQueue instance into database
@@ -104,6 +104,7 @@ func Save(jq *JobQueue) bool {
 	defer dataAccess.Close()
 	col := dataAccess.GetCollection(jobQueueCol)
 	jq.GenerateUniqueID()
+	jq.Status = StatusActive
 	err := col.Insert(&jq)
 	if err == nil {
 		modelLogger.Info(fmt.Sprintf("Success to create JobQueue with name: %v", jq.Name))
@@ -115,15 +116,14 @@ func Save(jq *JobQueue) bool {
 
 // Update modify JobQueue instance in database
 // returns true if success
-func Update(uid string, changes bson.M) bool {
+func Update(jq *JobQueue, changes bson.M) bool {
 	dataAccess := base.NewDataAccess()
 	defer dataAccess.Close()
 	col := dataAccess.GetCollection(jobQueueCol)
-	selector := bson.M{"unique_id": uid}
 	update := bson.M{"$set": changes}
-	err := col.Update(selector, update)
+	err := col.UpdateId(jq.ID, update)
 	if err != nil {
-		modelLogger.Fatal(fmt.Sprintf("Failed to update JobQueue with unique_id: %v", uid), err)
+		modelLogger.Fatal(fmt.Sprintf("Failed to update JobQueue with id: %v", jq.ID), err)
 	}
 	return err == nil
 }
@@ -150,7 +150,7 @@ func DeleteJobQueue(jobQueue *JobQueue) bool {
 	dataAccess := base.NewDataAccess()
 	defer dataAccess.Close()
 	col := dataAccess.GetCollection(jobQueueCol)
-	err := col.Remove(bson.M{"unique_id": jobQueue.UniqueID})
+	err := col.RemoveId(jobQueue.ID)
 	if err == nil {
 		modelLogger.Info(fmt.Sprintf("Success to delete JobQueue with name: %v", jobQueue.Name))
 		return true
@@ -161,22 +161,22 @@ func DeleteJobQueue(jobQueue *JobQueue) bool {
 
 // PostponeJobQueue move the JobQueue to canceled job collections
 // Returns true if postponing JobQueue is successful
-func PostponeJobQueue(uid string) bool {
-	return Update(uid, bson.M{"status": StatusPostponed})
+func PostponeJobQueue(jq *JobQueue) bool {
+	return Update(jq, bson.M{"status": StatusPostponed})
 }
 
 // GetPostponed returns Postponed JobQueue by its id
-func GetPostponed(uid string) *JobQueue {
+func GetPostponed(id string) *JobQueue {
 	dataAccess := base.NewDataAccess()
 	defer dataAccess.Close()
 	col := dataAccess.GetCollection(jobQueueCol)
 	var jq JobQueue
-	err := col.FindId(bson.M{
-		"unique_id": uid,
-		"status":    StatusPostponed,
+	err := col.Find(bson.M{
+		"_id":    bson.ObjectIdHex(id),
+		"status": StatusPostponed,
 	}).One(&jq)
 	if err != nil {
-		modelLogger.Info(fmt.Sprintf("Failed to get postponed JobQueue with unique_id: %v", uid))
+		modelLogger.Info(fmt.Sprintf("Failed to get postponed JobQueue with id: %v", id))
 	}
 	return &jq
 }
@@ -202,11 +202,10 @@ func DeletePostponed(jq *JobQueue) bool {
 	dataAccess := base.NewDataAccess()
 	defer dataAccess.Close()
 	col := dataAccess.GetCollection(jobQueueCol)
-	selector := bson.M{"unique_id": jq.UniqueID}
 	update := bson.M{"$set": bson.M{"status": StatusFinished}}
-	err := col.Update(selector, update)
+	err := col.UpdateId(jq.ID, update)
 	if err != nil {
-		modelLogger.Fatal(fmt.Sprintf("Failed to delete JobQueue with uid: %v", jq.UniqueID), err)
+		modelLogger.Fatal(fmt.Sprintf("Failed to delete JobQueue with id: %v", jq.ID), err)
 	}
 	return err == nil
 }
@@ -217,16 +216,11 @@ func RequeuePostponed(jq *JobQueue) bool {
 	dataAccess := base.NewDataAccess()
 	defer dataAccess.Close()
 	col := dataAccess.GetCollection(jobQueueCol)
-	suc := DeletePostponed(jq)
-	if !suc {
-		return suc
-	}
-	jq.ID = ""
-	err := col.Insert(jq)
+	err := col.UpdateId(jq.ID, bson.M{"$set": bson.M{"status": StatusActive}})
 	if err == nil {
-		modelLogger.Info(fmt.Sprintf("Success to requeue JobQueue with name: %v", jq.Name))
+		modelLogger.Info(fmt.Sprintf("Success to requeue JobQueue with uid: %v", jq.UniqueID))
 		return true
 	}
-	modelLogger.Info(fmt.Sprintf("Failed to requeue JobQueue with name: %v", jq.Name))
+	modelLogger.Fatal(fmt.Sprintf("Failed to requeue JobQueue with uid: %v", jq.UniqueID), err)
 	return false
 }

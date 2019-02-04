@@ -9,6 +9,6 @@ func DefineViewRoutes(router *gin.Engine, prefix string) {
 }
 
 // DefineAPIRoutes defines routes for authentication API
-func DefineAPIRoutes(router *gin.Engine, prefix string) {
-	router.POST(prefix+"/login", login)
+func DefineAPIRoutes(router *gin.RouterGroup) {
+	router.POST("/login", login)
 }
