@@ -100,7 +100,7 @@
                     var a = document.createElement('a');
                     a.setAttribute('href', 'https://www.instagram.com/'+card.ig_id);
                     a.setAttribute('target', '_blank')
-                    var active = card.status == "multi" ? 'active' : 'inactive';
+                    var active = card.Status == "multi" ? 'active' : 'inactive';
                     a.innerHTML = '@' + card.ig_id + '('+active+')';
                     s1.appendChild(a);
 
@@ -121,7 +121,7 @@
                     btnDelete.innerHTML = 'Delete';
                     s2.appendChild(btnDelete);
 
-                    if (card.status == "multi") {
+                    if (card.Status == "multi") {
                         btnActivate.setAttribute('disabled', 'disabled');
                         btnActivate.setAttribute('class', 'button');
 
