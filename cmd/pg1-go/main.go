@@ -32,6 +32,11 @@ func humInt(num int) string {
 	return humanize.Comma(int64(num))
 }
 
+func ginMode() string {
+	gm := os.Getenv("GIN_MODE")
+	return gm
+}
+
 func main() {
 	port := os.Getenv("PORT")
 
@@ -54,6 +59,7 @@ func main() {
 		"decrease": dec,
 		"increase": inc,
 		"humInt":   humInt,
+		"ginMode":  ginMode,
 	})
 	router.LoadHTMLGlob("templates/*.tmpl.html")
 	router.Static("/static", "static")
