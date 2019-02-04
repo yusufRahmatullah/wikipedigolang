@@ -96,6 +96,7 @@
                 var i = document.createElement('img');
                 i.setAttribute('src', card.pp_url);
                 i.setAttribute('style', 'height:100%;');
+                i.setAttribute('onerror', 'if (this.src != "/static/default.png") this.src = "/static/default.png";');
                 var tt = document.createElement('div');
                 tt.setAttribute('class', 'section double-padded center')
                 tt.innerHTML = card.name;
