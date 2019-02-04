@@ -3,12 +3,14 @@
   {{template "header.tmpl.html" "Batch Add"}}
 <body>
     <center>
-        <h2>Batch Add (SingleAccountJob)</h2>
-        <label for="igId">IG ID(s): <sub>(List of IG ID or IG URL separated by new line)</sub></label>
-        <br />
-        <textarea id="igId" name="igId" rows="5"></textarea>
-        <br/>
-        <button type="submit" onclick="post();">Post Job</button>
+        <form method="POST" onsubmit="post(); return false">
+            <h2>Batch Add (SingleAccountJob)</h2>
+            <label for="igId">IG ID(s): <sub>(List of IG ID or IG URL separated by new line)</sub></label>
+            <br />
+            <textarea id="igId" name="igId" rows="5"></textarea>
+            <br/>
+            <button type="submit">Post Job</button>
+        </form>
     </center>
 <script>
     function loadAvaJobs() {
