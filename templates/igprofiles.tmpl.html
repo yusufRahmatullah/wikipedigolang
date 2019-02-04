@@ -7,6 +7,23 @@
         <div class="center">
             <input id="search" placeholder="Search IGO here..." oninput="initSearch();" style="position: absoulte;"/>
         </div>
+        <div id="sorter">
+            <label for="sort-by">Sort By</label>
+            <select id="sort-by" onchange="initSearch();">
+                <option value="created_at" selected>Created At</option>
+                <option value="modified_at">Modified At</option>
+                <option value="ig_id">IG ID</option>
+                <option value="name">Name</option>
+                <option value="followers">Followers</option>
+                <option value="following">Following</option>
+                <option value="posts">Post Number</option>
+            </select>
+            <label for="order">Order</label>
+            <select id="order-by" onchange="initSearch();">
+                <option value="1">Ascending</option>
+                <option value="-1" selected>Descending</option>
+            </select>
+        </div>
         <div id ="card-container" class="row">
         </div>
         <div class="center">
@@ -35,7 +52,9 @@
 
         function search() {
             var query = document.getElementById('search').value;
-            var url = '/api/igprofiles/search?offset='+offset+'&query='+query;
+            var sortBy = document.getElementById('sort-by').value;
+            var order = document.getElementById('order-by').value;
+            var url = '/api/igprofiles/search?offset='+offset+'&query='+query+'&sort='+sortBy+'&order='+order;
             if (urlLocks.includes(url)) {
                 return
             }
