@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+    {{template "header.tmpl.html" "Igo Profiles"}}
+<body onload="reset();">
+    <h1 class="center">IGO Profiles</h1>
+    <div class="container">
+        <div class="center">
+            <input id="search" placeholder="Search IGO here..." oninput="initSearch();" style="position: absoulte;"/>
+        </div>
+        <div id="sorter">
+            <label for="sort-by">Sort By</label>
+            <select id="sort-by" onchange="initSearch();">
+                <option value="created_at" selected>Created At</option>
+                <option value="modified_at">Modified At</option>
+                <option value="ig_id">IG ID</option>
+                <option value="name">Name</option>
+                <option value="followers">Followers</option>
+                <option value="following">Following</option>
+                <option value="posts">Post Number</option>
+            </select>
+            <label for="order">Order</label>
+            <select id="order-by" onchange="initSearch();">
+                <option value="1">Ascending</option>
+                <option value="-1" selected>Descending</option>
+            </select>
+        </div>
+        <div id ="card-container" class="row">
+        </div>
+        <div class="center">
+            <div id="not-found" class="card warning double-padded" style="margin: 0 auto; visibility: hidden;">Ig Profiles not found</div>
+        </div>
+        <div class="center">
+            <div class="spinner primary"></div>
+        </div>
+    </div>
+    <script>
+        var offset = 0;
+        var urlLocks = [];
+        
+        window.onscroll = function(ev) {
+            if ((window.innerHeight + window.pageYOffset) >= document.body.offsetHeight) {
+                search();
+            }
+        };
+
+        function initSearch() {
+            offset = 0;
+            document.getElementById('card-container').innerHTML = '';
+            urlLocks.length = 0;  // reset locks
+            search();
+        }
+
+        function search() {
+            var query = document.getElementById('search').value;
+            var sortBy = document.getElementById('sort-by').value;
+            var order = document.getElementById('order-by').value;
+            var url = '/api/igprofiles/search_all?offset='+offset+'&query='+query+'&sort='+sortBy+'&order='+order;
+            if (urlLocks.includes(url)) {
+                return
+            }
+            urlLocks.push(url);
+            spinner(true);
+            fetch(url, {
+                credentials: 'same-origin'
+            })
+            .then(res => res.json())
+            .then(json => {
+                var currentQuery = document.getElementById('search').value;
+                if (currentQuery !== json.data.query) {
+                    return
+                }
+                spinner(false);
+                if (json.status === 'OK') {
+                    if (offset == 0 && json.data.profiles == null) {
+                        notFound(true);
+                    } else {
+                        notFound(false);
+                        appendCards(json.data.profiles);
+                        offset += json.data.profiles.length;
+                    }
+                    urlLocks.length = 0;
+                } else if (json.status === 'error'){
+                    notFound(true);
+                }
+            })
+        }
+
+        function reset() {
+            offset = 0;
+            document.getElementById('search').value = '';
+            initSearch();
+        }
+
+        function notFound(v) {
+            var n = document.getElementById('not-found');
+            if (v) {
+                n.style.visibility = 'visible';
+            } else {
+                n.style.visibility = 'hidden';
+            }
+        }
+
+        function spinner(b) {
+            var n = document.querySelector('.spinner');
+            n.style.visibility = b ? 'visible' : 'hidden';
+        }
+
+        function doAction(btn, action) {
+            var igid = btn.getAttribute('data-igId');
+            var data = {
+                ig_id: igid,
+                action: action,
+            };
+            fetch('/api/igprofiles/action', {
+                method: 'POST',
+                body: JSON.stringify(data),
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(res => res.json())
+            .then(json => {
+                if (json.status === 'OK') {
+                    document.location.reload(true);
+                } else {
+                    alert(json.message);
+                }
+            })
+            .catch(err => console.error(err))
+        }        
+
+        function generateButtonsText(status, igid) {
+            var actDis = '';
+            var actCls = 'primary';
+            var banDis = '';
+            var banCls = 'secondary';
+            var asMultiDis = '';
+            var asMultiCls = 'tertiary';
+            if (status == 'active') {
+                actCls = 'button';
+                actDis = 'disabled';
+            } else if (status == 'banned') {
+                banCls = 'button';
+                banDis = 'disabled';
+            } else if (status == 'multi') {
+                asMultiCls = 'button';
+                asMultiDis = 'disabled';
+            } else if (status == 'banned_multi') {
+                banCls = 'button';
+                banDis = 'disabled';
+            }
+            return `
+            <div class="section button-group">
+                <button class="`+actCls+`" data-igId="`+igid+`" onclick="doAction(this, 'activate');" `+actDis+`>Activate</button>
+                <button class="`+banCls+`" data-igId="`+igid+`" onclick="doAction(this, 'ban');" `+banDis+`>Ban</button>
+                <button class="`+asMultiCls+`" data-igId="`+igid+`" onclick="doAction(this, 'asMulti'); `+asMultiDis+`">As Multi</button>
+            </div>`
+        }
+
+        function appendCards(cards) {
+            var cc = document.getElementById('card-container');
+            cards.forEach(card => {                
+                var col = document.createElement('div');
+                col.setAttribute('class', 'col-sm-4 col-md-3')
+                col.innerHTML = `
+                <div class="card">
+                    <img src="`+card.pp_url+`" style="height:100%" onerror='if (this.src != "/static/default.png") this.src = "/static/default.png";'/>
+                    <div class="section double-padded center">`+card.name+`</div>
+                    <div class="section dark center">
+                        <a href="https://www.instagram.com/`+card.ig_id+`" target="_blank">
+                            @`+card.ig_id+`
+                        </a>
+                    </div>
+                    <div class="section center">Status: `+card.Status+`</div>
+                    <div class="section button-group">
+                        `+generateButtonsText(card.Status, card.ig_id)+`
+                    </div>
+                </div>`;
+                cc.appendChild(col);
+            });
+        }
+    </script>
+</body>
+</html>

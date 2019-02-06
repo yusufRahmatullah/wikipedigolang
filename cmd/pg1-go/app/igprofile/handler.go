@@ -111,14 +111,14 @@ func convertIntOrDefault(text string, def int) int {
 	return num
 }
 
-func findIgProfileHandler(c *gin.Context) {
+func findIgProfile(c *gin.Context, status ProfileStatus) {
 	offsetStr := c.Query("offset")
 	limitStr := c.Query("limit")
 	query := c.Query("query")
 	offset := convertIntOrDefault(offsetStr, defaultOffset)
 	limit := convertIntOrDefault(limitStr, defaultLimit)
 	sort := generateSortOrder(c)
-	igps := FindIgProfile(query, offset, limit, StatusActive, sort)
+	igps := FindIgProfile(query, offset, limit, status, sort)
 	compData := struct {
 		Profiles []IgProfile `json:"profiles"`
 		Query    string      `json:"query"`
@@ -128,6 +128,14 @@ func findIgProfileHandler(c *gin.Context) {
 	}
 	data := base.StandardJSON("", compData)
 	c.JSON(http.StatusOK, data)
+}
+
+func findIgProfileAllStatusHandler(c *gin.Context) {
+	findIgProfile(c, StatusAll)
+}
+
+func findIgProfileHandler(c *gin.Context) {
+	findIgProfile(c, StatusActive)
 }
 
 func deleteIgProfileHandler(c *gin.Context) {
@@ -188,6 +196,40 @@ func deleteMultiAccHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, data)
 }
 
+func igProfileActionHandler(c *gin.Context) {
+	jd := struct {
+		IGID   string        `json:"ig_id"`
+		Action ProfileStatus `json:"action"`
+	}{
+		IGID:   "",
+		Action: "",
+	}
+	c.BindJSON(&jd)
+	if jd.IGID == "" {
+		data := base.ErrorJSON("Param ig_id can't be empty", nil)
+		c.JSON(http.StatusBadRequest, data)
+	}
+	status := "active"
+	switch jd.Action {
+	case "ban":
+		status = "banned"
+	case "asMulti":
+		status = "multi"
+	case "activate":
+		status = "active"
+	default:
+		status = "active"
+	}
+	suc := Update(jd.IGID, bson.M{"status": status})
+	if suc {
+		data := base.StandardJSON(fmt.Sprintf("Success to %v IG ID: %v", jd.Action, jd.IGID), nil)
+		c.JSON(http.StatusOK, data)
+	} else {
+		data := base.StandardJSON(fmt.Sprintf("Failed to %v IG ID: %v", jd.Action, jd.IGID), nil)
+		c.JSON(http.StatusBadRequest, data)
+	}
+}
+
 /////////////////////////////////
 // IgProfile Views
 /////////////////////////////////
@@ -198,4 +240,8 @@ func igProfilesView(c *gin.Context) {
 
 func multiAccView(c *gin.Context) {
 	c.HTML(http.StatusOK, "multi_acc.tmpl.html", nil)
+}
+
+func adminIgProfileView(c *gin.Context) {
+	c.HTML(http.StatusOK, "admin_igprofiles.tmpl.html", nil)
 }

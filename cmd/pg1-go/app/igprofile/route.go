@@ -16,9 +16,12 @@ func DefineAPIRoutes(router *gin.RouterGroup) {
 	reqAdmin := router.Group("")
 	reqAdmin.Use(auth.RequiredAdmin())
 	{
+		reqAdmin.GET("/igprofiles/search_all", findIgProfileAllStatusHandler)
 		reqAdmin.POST("/igprofiles", newIgProfileHandler)
 		reqAdmin.PATCH("/igprofile/:ig_id", modifyIgProfileHandler)
 		reqAdmin.DELETE("/igprofile/:ig_id", deleteIgProfileHandler)
+
+		reqAdmin.POST("/igprofiles/action", igProfileActionHandler)
 
 		reqAdmin.GET("/multi_acc", findMultiAccHandler)
 		reqAdmin.POST("/multi_acc/:ig_id", activateMultiAccHandler)
@@ -37,5 +40,11 @@ func DefineViewRoutes(router *gin.Engine, prefix string) {
 	reqAdmin.Use(auth.RequiredAdmin())
 	{
 		reqAdmin.GET("/multi_acc", multiAccView)
+	}
+
+	adminPage := router.Group("/admin")
+	adminPage.Use(auth.RequiredAdmin())
+	{
+		adminPage.GET("/igprofiles", adminIgProfileView)
 	}
 }
