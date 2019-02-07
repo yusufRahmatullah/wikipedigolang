@@ -87,3 +87,38 @@ func CleanIgIDParams(igID string) string {
 	cleanID := splts[0]
 	return cleanID
 }
+
+// FindByName find IG ID by name
+// returns ig id if exist, otherwise empty string
+func FindByName(name string) string {
+	cname := strings.Trim(name, " ")
+	r := req.New()
+	params := req.Param{
+		"query": cname,
+	}
+	resp, err := r.Get("https://www.instagram.com/web/search/topsearch", params)
+	if err == nil {
+		code := resp.Response().StatusCode
+		if code != http.StatusOK {
+			utilLogger.Fatal(fmt.Sprintf("Failed to find by name: '%v' with code: %v", cname, code), nil)
+			return ""
+		}
+		bodyText := resp.String()
+		var data map[string]interface{}
+		json.Unmarshal([]byte(bodyText), &data)
+		if data == nil {
+			utilLogger.Fatal(fmt.Sprintf("Failed to unmarshall response on name: '%v, bodyText: %v'", cname, bodyText), nil)
+			return ""
+		}
+		users := data["users"].([]interface{})
+		if len(users) == 0 {
+			utilLogger.Fatal(fmt.Sprintf("Failed, users is empty on name: '%v'", cname), nil)
+			return ""
+		}
+		topUser := users[0].(map[string]interface{})
+		userData := topUser["user"].(map[string]interface{})
+		return userData["username"].(string)
+	}
+	utilLogger.Fatal(fmt.Sprintf("Failed to find by name: '%v'", cname), err)
+	return ""
+}
