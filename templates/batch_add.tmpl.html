@@ -1,10 +1,14 @@
 <!DOCTYPE html>
 <html>
   {{template "header.tmpl.html" "Batch Add"}}
-<body>
+  <body onload="loadAvaJobs();">
     <center>
         <form method="POST" onsubmit="post(); return false">
             <h2>Batch Add (SingleAccountJob)</h2>
+            <label for="jobName">Job Name: </label>
+            <select name="jobName" id="jobName">
+            </select>
+            <br />
             <label for="igId">IG ID(s): <sub>(List of IG ID or IG URL separated by new line)</sub></label>
             <br />
             <textarea id="igId" name="igId" rows="5"></textarea>
@@ -31,12 +35,14 @@
     }
 
     function post() {
+        var jobName = document.querySelector("#jobName").value;
         var igIdInput = document.querySelector("#igId");
         var igIds = igIdInput.value.split("\n");
         var data = {
             "name": "BatchAdd",
             "params": {
                 "ig_ids": igIds,
+                "job_name": jobName,
             }
         }
         fetch('/api/batch_add', {

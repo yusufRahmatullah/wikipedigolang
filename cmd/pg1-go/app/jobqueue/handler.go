@@ -47,9 +47,12 @@ func batchAddHandler(c *gin.Context) {
 	} else {
 		ids, ok := jq.Params["ig_ids"]
 		if ok {
-			for _, igID := range ids.([]interface{}) {
-				ijq := NewJobQueue("SingleAccountJob", gin.H{"ig_id": igID.(string)})
-				Save(ijq)
+			jobName, ok := jq.Params["job_name"]
+			if ok {
+				for _, igID := range ids.([]interface{}) {
+					ijq := NewJobQueue(jobName.(string), gin.H{"ig_id": igID.(string)})
+					Save(ijq)
+				}
 			}
 		}
 		data := base.StandardJSON("Batch Add JobQueue successful", nil)
