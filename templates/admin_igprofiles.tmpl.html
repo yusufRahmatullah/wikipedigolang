@@ -138,16 +138,16 @@
             var asMultiDis = '';
             var asMultiCls = 'tertiary';
             if (status == 'active') {
-                actCls = 'button';
+                actCls = 'hidden';
                 actDis = 'disabled';
             } else if (status == 'banned') {
-                banCls = 'button';
+                banCls = 'hidden';
                 banDis = 'disabled';
             } else if (status == 'multi') {
-                asMultiCls = 'button';
+                asMultiCls = 'hidden';
                 asMultiDis = 'disabled';
             } else if (status == 'banned_multi') {
-                banCls = 'button';
+                banCls = 'hidden';
                 banDis = 'disabled';
             }
             return `
@@ -173,9 +173,7 @@
                         </a>
                     </div>
                     <div class="section center">Status: `+card.Status+`</div>
-                    <div class="section button-group">
                         `+generateButtonsText(card.Status, card.ig_id)+`
-                    </div>
                 </div>`;
                 cc.appendChild(col);
             });
