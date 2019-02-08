@@ -198,8 +198,8 @@ func deleteMultiAccHandler(c *gin.Context) {
 
 func igProfileActionHandler(c *gin.Context) {
 	jd := struct {
-		IGID   string        `json:"ig_id"`
-		Action ProfileStatus `json:"action"`
+		IGID   string `json:"ig_id"`
+		Action string `json:"action"`
 	}{
 		IGID:   "",
 		Action: "",
@@ -225,7 +225,7 @@ func igProfileActionHandler(c *gin.Context) {
 		data := base.StandardJSON(fmt.Sprintf("Success to %v IG ID: %v", jd.Action, jd.IGID), nil)
 		c.JSON(http.StatusOK, data)
 	} else {
-		data := base.StandardJSON(fmt.Sprintf("Failed to %v IG ID: %v", jd.Action, jd.IGID), nil)
+		data := base.ErrorJSON(fmt.Sprintf("Failed to %v IG ID: %v", jd.Action, jd.IGID), nil)
 		c.JSON(http.StatusBadRequest, data)
 	}
 }

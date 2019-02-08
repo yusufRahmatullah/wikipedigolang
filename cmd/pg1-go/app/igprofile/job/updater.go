@@ -37,6 +37,11 @@ func updateIgID(igp *igprofile.IgProfile) {
 		} else {
 			ujLogger.Fatal(fmt.Sprintf("Failed to update IG ID: %v", igID), nil)
 		}
+		jq := jobqueue.NewJobQueue("TopTwelveJob", map[string]interface{}{
+			"ig_id": igID,
+		})
+		jobqueue.Save(jq)
+
 	}
 }
 

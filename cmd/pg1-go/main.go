@@ -4,6 +4,8 @@ import (
 	"html/template"
 	"os"
 
+	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/igmedia"
+
 	"github.com/gin-gonic/contrib/sessions"
 
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/auth"
@@ -66,10 +68,12 @@ func main() {
 	jobqueue.DefineViewRoutes(router, "")
 	igprofile.DefineViewRoutes(router, "")
 	auth.DefineViewRoutes(router, "")
+	igmedia.DefineViewRoutes(router)
 
 	api := router.Group("/api")
 	jobqueue.DefineAPIRoutes(api)
 	igprofile.DefineAPIRoutes(api)
 	auth.DefineAPIRoutes(api)
+	igmedia.DefineAPIRoutes(api)
 	router.Run(":" + port)
 }

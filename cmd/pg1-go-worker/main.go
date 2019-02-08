@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"time"
 
+	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/igmedia"
+
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/logger"
 
 	igProfileJob "git.heroku.com/pg1-go-work/cmd/pg1-go/app/igprofile/job"
@@ -27,12 +29,14 @@ func init() {
 	postExtractorJob := igProfileJob.NewPostExtractionJob()
 	banAccountJob := igProfileJob.NewBanAccountJob()
 	searchNameJob := igProfileJob.NewSearchNameJob()
+	topTwelveJob := igmedia.NewTopTwelveJob()
 	jobAssigner.Register(singleAccountJob)
 	jobAssigner.Register(updaterJob)
 	jobAssigner.Register(multiAccountJob)
 	jobAssigner.Register(postExtractorJob)
 	jobAssigner.Register(banAccountJob)
 	jobAssigner.Register(searchNameJob)
+	jobAssigner.Register(topTwelveJob)
 }
 
 func getWaitTime() int {
