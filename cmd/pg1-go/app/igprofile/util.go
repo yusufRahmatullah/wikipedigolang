@@ -47,6 +47,7 @@ type UserData struct {
 	FullName       string    `json:"full_name"`
 	EdgeOwnerMedia MediaData `json:"edge_owner_to_timeline_media"`
 	ProfPic        string    `json:"profile_pic_url_hd"`
+	IsPrivate      bool      `json:"is_private"`
 }
 
 // MediaData node holds list of edges
@@ -107,6 +108,10 @@ func TopTwelveMedia(igID string) []NodeData {
 			return nil
 		}
 		user := data.EntryData.ProfilePage[0].Graphql.User
+		if user.IsPrivate {
+			utilLogger.Fatal(fmt.Sprintf("Failed to get IgMedia from IG ID %v because the IG is private", igID), nil)
+			return nil
+		}
 		var retVals []NodeData
 		edges := user.EdgeOwnerMedia.Edges
 		for _, edge := range edges {
