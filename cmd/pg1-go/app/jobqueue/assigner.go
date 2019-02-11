@@ -90,9 +90,10 @@ func (ja *JobAssigner) ProcessJobQueue(jobQueue *JobQueue) bool {
 	name := jobQueue.Name
 	params := jobQueue.Params
 	proc, exist := ja.ProcessorMap[name]
+	errMsg := ""
 	if exist {
-		suc := proc.Process(jobQueue)
-		if suc {
+		errMsg = proc.Process(jobQueue)
+		if errMsg == "" {
 			assignerLogger.Info(fmt.Sprintf("Success to process %v", name))
 			return DeleteJobQueue(jobQueue)
 		}
@@ -101,6 +102,6 @@ func (ja *JobAssigner) ProcessJobQueue(jobQueue *JobQueue) bool {
 	} else {
 		assignerLogger.Info(fmt.Sprintf("%v not exist", name))
 	}
-	PostponeJobQueue(jobQueue)
+	PostponeJobQueue(jobQueue, errMsg)
 	return false
 }

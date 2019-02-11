@@ -26,7 +26,7 @@ func newJobQueueHandler(c *gin.Context) {
 		suc := Save(&jq)
 		var msg string
 		var status int
-		if suc {
+		if suc == "" {
 			msg = "Create JobQueue successful"
 			status = http.StatusCreated
 		} else {

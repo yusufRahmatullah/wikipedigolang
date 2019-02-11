@@ -108,8 +108,8 @@ func crawlMultiIgID(igID string) {
 }
 
 // Process executes JobQueue with the given params
-// Always returns true due the process is async
-func (job *MultiAccountJob) Process(jq *jobqueue.JobQueue) bool {
+// returns empty string if success
+func (job *MultiAccountJob) Process(jq *jobqueue.JobQueue) string {
 	majLogger.Debug("run process")
 	params := (*jq).Params
 	igID, ok := params["ig_id"]
@@ -120,8 +120,8 @@ func (job *MultiAccountJob) Process(jq *jobqueue.JobQueue) bool {
 		suc := igprofile.Save(igp)
 		majLogger.Info(fmt.Sprintf("Save multi account: %v", suc))
 		crawlMultiIgID(cleanID)
-	} else {
-		majLogger.Info("Param ig_id not found")
+		return ""
 	}
-	return true
+	return "Param ig_id not found"
+
 }

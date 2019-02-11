@@ -27,9 +27,9 @@ func (job *SingleAccountJob) Name() string {
 	return "SingleAccountJob"
 }
 
-func crawlIgID(igID string) bool {
+func crawlIgID(igID string) string {
 	igp := igprofile.FetchIgProfile(igID)
-	success := false
+	success := ""
 	if igp != nil {
 		success = igprofile.SaveOrUpdate(igp)
 		jq := jobqueue.NewJobQueue("TopTwelveJob", map[string]interface{}{"ig_id": igID})
@@ -39,8 +39,8 @@ func crawlIgID(igID string) bool {
 }
 
 // Process executes job queue with the given params
-// Returns true if process success
-func (job *SingleAccountJob) Process(jq *jobqueue.JobQueue) bool {
+// Returns empty string if process success
+func (job *SingleAccountJob) Process(jq *jobqueue.JobQueue) string {
 	sajLogger.Debug("run process")
 	params := (*jq).Params
 	igID, ok := params["ig_id"]
@@ -48,5 +48,5 @@ func (job *SingleAccountJob) Process(jq *jobqueue.JobQueue) bool {
 		cleanID := igprofile.CleanIgIDParams(igID.(string))
 		return crawlIgID(cleanID)
 	}
-	return false
+	return "Param ig_id not found"
 }

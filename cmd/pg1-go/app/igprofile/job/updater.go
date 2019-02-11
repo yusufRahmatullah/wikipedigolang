@@ -32,7 +32,7 @@ func updateIgID(igp *igprofile.IgProfile) {
 	if igp2 != nil {
 		changes := igprofile.GenerateChanges(igp2)
 		suc := igprofile.Update(igID, bson.M{"$set": changes})
-		if suc {
+		if suc == "" {
 			ujLogger.Debug(fmt.Sprintf("Success to update IG ID: %v", igID))
 		} else {
 			ujLogger.Fatal(fmt.Sprintf("Failed to update IG ID: %v", igID), nil)
@@ -48,8 +48,8 @@ func updateIgID(igp *igprofile.IgProfile) {
 
 // Process executes job queue with the given params
 // Update process is not guaranted to success
-// This method always returns true
-func (job *UpdaterJob) Process(jq *jobqueue.JobQueue) bool {
+// This method always returns empty string
+func (job *UpdaterJob) Process(jq *jobqueue.JobQueue) string {
 	ujLogger.Debug("run process")
 	ujLogger.Debug("Get all existing IgProfile")
 	var igps []igprofile.IgProfile
@@ -70,5 +70,5 @@ func (job *UpdaterJob) Process(jq *jobqueue.JobQueue) bool {
 			break
 		}
 	}
-	return true
+	return ""
 }

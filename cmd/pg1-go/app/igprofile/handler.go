@@ -33,7 +33,7 @@ func newIgProfileHandler(c *gin.Context) {
 		suc := Save(&igp)
 		var msg string
 		var status int
-		if suc {
+		if suc == "" {
 			msg = "Create IgProfile successful"
 			status = http.StatusCreated
 		} else {
@@ -90,7 +90,7 @@ func modifyIgProfileHandler(c *gin.Context) {
 	suc := Update(igID, changes)
 	var msg string
 	var status int
-	if suc {
+	if suc == "" {
 		msg = "Update IgProfile successful"
 		status = http.StatusCreated
 	} else {
@@ -154,7 +154,7 @@ func deleteIgProfileHandler(c *gin.Context) {
 	igID := c.Param("ig_id")
 	suc := DeleteIgProfile(igID, false)
 	var msg string
-	if suc {
+	if suc == "" {
 		msg = "Delete IgProfile successful"
 	} else {
 		msg = "Failed to delete IgProfile"
@@ -167,7 +167,7 @@ func activateMultiAccHandler(c *gin.Context) {
 	iid := c.Param("ig_id")
 	suc := Update(iid, bson.M{"status": StatusMulti})
 	var msg string
-	if suc {
+	if suc == "" {
 		msg = "Save MultiAcc successful"
 	} else {
 		msg = "Failed to save MultiAcc"
@@ -199,7 +199,7 @@ func deleteMultiAccHandler(c *gin.Context) {
 	iid := c.Param("ig_id")
 	suc := DeleteIgProfile(iid, true)
 	var msg string
-	if suc {
+	if suc == "" {
 		msg = "Delete MultiAcc successful"
 	} else {
 		msg = "Failed to delete MultiAcc"
@@ -233,7 +233,7 @@ func igProfileActionHandler(c *gin.Context) {
 		status = "active"
 	}
 	suc := Update(jd.IGID, bson.M{"status": status})
-	if suc {
+	if suc == "" {
 		data := base.StandardJSON(fmt.Sprintf("Success to %v IG ID: %v", jd.Action, jd.IGID), nil)
 		jq := jobqueue.NewJobQueue("UpdateIgMediaStatusJob", map[string]interface{}{"ig_id": jd.IGID})
 		jobqueue.Save(jq)

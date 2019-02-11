@@ -71,8 +71,8 @@ func (model *IgProfile) initTime() {
 }
 
 // Save writes IgProfile instance to database
-// returns true if success
-func Save(igp *IgProfile) bool {
+// returns empty string if success
+func Save(igp *IgProfile) string {
 	dataAccess := base.NewDataAccess()
 	defer dataAccess.Close()
 	col := dataAccess.GetCollection(igProfileCol)
@@ -80,15 +80,15 @@ func Save(igp *IgProfile) bool {
 	err := col.Insert(igp)
 	if err == nil {
 		modelLogger.Info(fmt.Sprintf("Success to create IgProfile with IG ID: %v", igp.IGID))
-		return true
+		return ""
 	}
-	modelLogger.Info(fmt.Sprintf("Failed to create IgProfile with IG ID: %v", igp.IGID))
-	return false
+	modelLogger.Fatal(fmt.Sprintf("Failed to create IgProfile with IG ID: %v", igp.IGID), err)
+	return "Failed to create IgProfile"
 }
 
 // Update modify IgProfile instance in database
-// returns true if success
-func Update(igID string, changes map[string]interface{}) bool {
+// returns empty string if success
+func Update(igID string, changes map[string]interface{}) string {
 	dataAccess := base.NewDataAccess()
 	defer dataAccess.Close()
 	col := dataAccess.GetCollection(igProfileCol)
@@ -98,10 +98,10 @@ func Update(igID string, changes map[string]interface{}) bool {
 	err := col.Update(selector, update)
 	if err == nil {
 		modelLogger.Info(fmt.Sprintf("Success to update IgProfile with IG ID: %v", igID))
-		return true
+		return ""
 	}
-	modelLogger.Info(fmt.Sprintf("Failed to update IgProfile with IG ID: %v", igID))
-	return false
+	modelLogger.Fatal(fmt.Sprintf("Failed to update IgProfile with IG ID: %v", igID), err)
+	return "Failed to update IgProfile"
 }
 
 // GenerateChanges build hash map of non-empty igp's attributes
@@ -130,8 +130,8 @@ func GenerateChanges(igp *IgProfile) map[string]interface{} {
 
 // SaveOrUpdate writes IgProfile instance to database
 // if IgProfile doesn't exists or update existing IgProfile
-// with new data. Returns true if success
-func SaveOrUpdate(igp *IgProfile) bool {
+// with new data. Returns empty string if success
+func SaveOrUpdate(igp *IgProfile) string {
 	strdIgp := GetIgProfile(igp.IGID)
 	if strdIgp.IGID == "" {
 		return Save(igp)
@@ -204,19 +204,13 @@ func FindIgProfile(query string, offset, limit int, status ProfileStatus, sortBy
 
 // DeleteIgProfile removes IgProfile instance from database by its IGID
 // and add the deleted IG ID to another database
-// returns true if success
-func DeleteIgProfile(igID string, isMulti bool) bool {
+// returns empty string if success
+func DeleteIgProfile(igID string, isMulti bool) string {
 	status := StatusBanned
 	if isMulti {
 		status = StatusBannedMulti
 	}
-	suc := Update(igID, bson.M{"status": status})
-	if suc {
-		modelLogger.Info(fmt.Sprintf("Success to delete IgProfile with IG ID: %v", igID))
-		return true
-	}
-	modelLogger.Info(fmt.Sprintf("Failed to delete IgProfile with IG ID: %v", igID))
-	return false
+	return Update(igID, bson.M{"status": status})
 }
 
 // Builder instantiate the IgProfile using builder pattern

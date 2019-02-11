@@ -25,8 +25,8 @@ func (job *UpdateIgMediaStatusJob) Name() string {
 }
 
 // Process executes JobQueue with the given params
-// Returns true if success
-func (job *UpdateIgMediaStatusJob) Process(jq *jobqueue.JobQueue) bool {
+// Returns empty string if success
+func (job *UpdateIgMediaStatusJob) Process(jq *jobqueue.JobQueue) string {
 	params := jq.Params
 	igID, ok := params["ig_id"]
 	if ok {
@@ -37,6 +37,5 @@ func (job *UpdateIgMediaStatusJob) Process(jq *jobqueue.JobQueue) bool {
 		}
 		return igmedia.UpdateStatusAll(igID.(string), status)
 	}
-	usLogger.Info("Param ig_id not found")
-	return false
+	return "Param ig_id not found"
 }

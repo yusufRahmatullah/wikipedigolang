@@ -66,6 +66,7 @@ type JobQueue struct {
 	Params   map[string]interface{} `json:"params" bson:"params"`
 	UniqueID string                 `json:"unique_id" bson:"unique_id"`
 	Status   JobStatus              `json:"status" bson:"status"`
+	Reason   string                 `json:"reason" bson:"reason"`
 }
 
 func sortedKeys(params map[string]interface{}) []string {
@@ -98,8 +99,8 @@ func NewJobQueue(name string, params map[string]interface{}) *JobQueue {
 }
 
 // Save writes JobQueue instance into database
-// returns true if save success
-func Save(jq *JobQueue) bool {
+// returns empty string if save success
+func Save(jq *JobQueue) string {
 	dataAccess := base.NewDataAccess()
 	defer dataAccess.Close()
 	col := dataAccess.GetCollection(jobQueueCol)
@@ -108,10 +109,10 @@ func Save(jq *JobQueue) bool {
 	err := col.Insert(&jq)
 	if err == nil {
 		modelLogger.Info(fmt.Sprintf("Success to create JobQueue with name: %v", jq.Name))
-		return true
+		return ""
 	}
-	modelLogger.Info(fmt.Sprintf("Failed to create JobQueue with name: %v", jq.Name))
-	return false
+	modelLogger.Fatal(fmt.Sprintf("Failed to create JobQueue with name: %v", jq.Name), err)
+	return "Failed to create JobQueue"
 }
 
 // Update modify JobQueue instance in database
@@ -160,9 +161,13 @@ func DeleteJobQueue(jobQueue *JobQueue) bool {
 }
 
 // PostponeJobQueue move the JobQueue to canceled job collections
+// Requires reason why JobQueue is postponed
 // Returns true if postponing JobQueue is successful
-func PostponeJobQueue(jq *JobQueue) bool {
-	return Update(jq, bson.M{"status": StatusPostponed})
+func PostponeJobQueue(jq *JobQueue, reason string) bool {
+	return Update(jq, bson.M{
+		"status": StatusPostponed,
+		"reason": reason,
+	})
 }
 
 // GetPostponed returns Postponed JobQueue by its id

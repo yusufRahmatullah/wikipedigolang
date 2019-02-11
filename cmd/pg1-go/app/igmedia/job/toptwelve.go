@@ -27,22 +27,22 @@ func (job *TopTwelveJob) Name() string {
 }
 
 // Process executes JobQueue with the given params
-// Returns true if success
-func (job *TopTwelveJob) Process(jq *jobqueue.JobQueue) bool {
+// Returns empty string if success
+func (job *TopTwelveJob) Process(jq *jobqueue.JobQueue) string {
 	params := jq.Params
 	igID, ok := params["ig_id"]
 	if ok {
-		topTwelve := igprofile.TopTwelveMedia(igID.(string))
-		if len(topTwelve) == 0 {
-			return false
+		topTwelve, errMsg := igprofile.TopTwelveMedia(igID.(string))
+		if errMsg != "" {
+			return errMsg
 		}
 		for _, node := range topTwelve {
 			if strings.Contains(node.AccessibilityCaption, "people") || strings.Contains(node.AccessibilityCaption, "person") {
 				igmedia.Save(igmedia.NewIgMedia(node.ID, igID.(string), node.DisplayURL))
 			}
 		}
-		return true
+		return ""
 	}
 	ttLogger.Info("Param ig_id not found")
-	return false
+	return "Param ig_id not found"
 }

@@ -19,13 +19,13 @@ func (job *BanAccountJob) Name() string {
 }
 
 // Process executes job queue with the given params
-// Returns true if process success
-func (job *BanAccountJob) Process(jq *jobqueue.JobQueue) bool {
+// Returns empty string if process success
+func (job *BanAccountJob) Process(jq *jobqueue.JobQueue) string {
 	params := (*jq).Params
 	igID, ok := params["ig_id"]
 	if ok {
 		cleanID := igprofile.CleanIgIDParams(igID.(string))
 		return igprofile.DeleteIgProfile(cleanID, false)
 	}
-	return false
+	return "Param ig_id not found"
 }

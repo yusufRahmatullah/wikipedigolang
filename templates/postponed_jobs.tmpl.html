@@ -34,29 +34,19 @@
                 var cn = document.createElement('div');
                 cn.setAttribute('class', 'card fluid');
                 cn.setAttribute('id', data.id);
-                var s1 = document.createElement('div');
-                s1.setAttribute('class', 'section');
-                s1.innerHTML = name;
-                var s2 = document.createElement('div');
-                s2.setAttribute('class', 'section');
-                s2.innerHTML = JSON.stringify(params);
-                var s3 = document.createElement('div');
-                s3.setAttribute('class', 'section');
-                var btnRequeue = document.createElement('button');
-                btnRequeue.setAttribute('class', 'primary');
-                btnRequeue.setAttribute('data-id', data.id);
-                btnRequeue.setAttribute('onclick', 'requeue(this);') 
-                btnRequeue.innerHTML = 'Requeue';
-                s3.append(btnRequeue);
-                var btnDelete = document.createElement('button');
-                btnDelete.setAttribute('class', 'secondary');
-                btnDelete.setAttribute('data-id', data.id);
-                btnDelete.setAttribute('onclick', 'deleteJob(this)');
-                btnDelete.innerHTML = 'Delete';
-                s3.append(btnDelete);
-                cn.append(s1);
-                cn.append(s2);
-                cn.append(s3);
+                cn.innerHTML = `
+                <div class="section">`+name+`</div>
+                <div class="section">`+JSON.stringify(params)+`</div>
+                <div class="section">Reason: `+data.reason+`</div>
+                <div class="section button-group">
+                    <button class="primary" data-id="`+data.id+`" onclick="requeue(this);">
+                        Requeue
+                    </button>
+                    <button class="secondary" data-id="`+data.id+`" onclick="deleteJob(this);">
+                        Delete
+                    </button>
+                </div>
+                `;
                 cc.append(cn);
             }
 

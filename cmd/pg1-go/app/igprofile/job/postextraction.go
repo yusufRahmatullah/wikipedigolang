@@ -64,17 +64,17 @@ func processExtractedAccounts(data map[string]interface{}) {
 	}
 }
 
-func extractAccountFromPost(pID string) bool {
+func extractAccountFromPost(pID string) string {
 	wpw := utils.NewWebPageWrapper(extLogger)
-	success := false
+	success := ""
 	if wpw != nil {
 		defer wpw.Close()
 		wpw.OnEvaluated(func(data map[string]interface{}) {
 			processExtractedAccounts(data)
-			success = true
+			success = ""
 		})
 		wpw.OnError(func(err error) {
-			success = false
+			success = err.Error()
 		})
 		wpw.OpenURL(fmt.Sprintf("https://www.instagram.com/p/%v", pID))
 		wpw.Evaluate(extJsFunc)
@@ -83,14 +83,13 @@ func extractAccountFromPost(pID string) bool {
 }
 
 // Process extracts mentioned account in Ig Post
-// returns true if process is success
-func (job *PostExtractionJob) Process(jq *jobqueue.JobQueue) bool {
+// returns empty string if process is success
+func (job *PostExtractionJob) Process(jq *jobqueue.JobQueue) string {
 	extLogger.Debug("run post extraction process")
 	params := jq.Params
 	pID, ok := params["post_id"]
 	if ok {
 		return extractAccountFromPost(pID.(string))
 	}
-	extLogger.Info("Param post_id not found")
-	return false
+	return "Param post_id not found"
 }

@@ -75,52 +75,48 @@ type HasCount struct {
 
 // TopTwelveMedia to get top 12 media's URL of IgProfile
 // with acessibility caption contains people
-func TopTwelveMedia(igID string) []NodeData {
+// Return array of NodeData and error message if error occurred
+func TopTwelveMedia(igID string) ([]NodeData, string) {
 	igID = strings.Trim(igID, " ")
 	if igID == "" {
-		utilLogger.Fatal("IG ID cannot be empty", nil)
-		return nil
+		return nil, "IG ID is empty"
 	}
 	r := req.New()
 	resp, err := r.Get(fmt.Sprintf("https://www.instagram.com/%s", igID))
 	if err == nil {
 		code := resp.Response().StatusCode
 		if code == http.StatusNotFound {
-			utilLogger.Fatal(fmt.Sprintf("IG ID %v not exist", igID), err)
-			return nil
+			return nil, "IG ID not exist"
 		}
 		bodyText := resp.String()
 		matches := matcher.FindStringSubmatch(bodyText)
 		if len(matches) < 2 {
 			utilLogger.Fatal(fmt.Sprintf("Failed to match sharedData on IG ID: %s", igID), err)
-			return nil
+			return nil, "Failed to match sharedData"
 		}
 		sharedData := matches[1]
 		if sharedData == "" {
-			utilLogger.Fatal("sharedData is empty", nil)
-			return nil
+			return nil, "sharedData is empty"
 		}
 		sharedData = sharedData[:len(sharedData)-1]
 		var data IgData
 		err := json.Unmarshal([]byte(sharedData), &data)
 		if err != nil {
 			utilLogger.Fatal(fmt.Sprintf("Failed to parse sharedData on IG ID: %s", igID), err)
-			return nil
+			return nil, "Failed to parse shared data"
 		}
 		user := data.EntryData.ProfilePage[0].Graphql.User
 		if user.IsPrivate {
-			utilLogger.Fatal(fmt.Sprintf("Failed to get IgMedia from IG ID %v because the IG is private", igID), nil)
-			return nil
+			return nil, "IG is private"
 		}
 		var retVals []NodeData
 		edges := user.EdgeOwnerMedia.Edges
 		for _, edge := range edges {
 			retVals = append(retVals, edge.Node)
 		}
-		return retVals
+		return retVals, ""
 	}
-	utilLogger.Fatal(fmt.Sprintf("Failed to fetch IG ID: %s", igID), err)
-	return nil
+	return nil, "Failed to fetch"
 }
 
 // FetchIgProfile to fetch Ig Profile information from IG

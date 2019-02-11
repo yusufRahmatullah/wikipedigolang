@@ -101,8 +101,8 @@ func UpdateStatus(id string, status MediaStatus) bool {
 }
 
 // UpdateStatusAll update IgMedia status of all igID
-// returns true if success
-func UpdateStatusAll(igID string, status MediaStatus) bool {
+// returns empty string if success
+func UpdateStatusAll(igID string, status MediaStatus) string {
 	dataAccess := base.NewDataAccess()
 	defer dataAccess.Close()
 	col := dataAccess.GetCollection(igMediaCol)
@@ -112,8 +112,8 @@ func UpdateStatusAll(igID string, status MediaStatus) bool {
 	)
 	if err != nil {
 		modelLogger.Fatal(fmt.Sprintf("Failed to update all IgMedia status with IG ID: %v", igID), err)
-		return false
+		return "Failed to update all IgMedia"
 	}
 	modelLogger.Info(fmt.Sprintf("Success to update %v IgMedia to %v", info.Updated, status))
-	return true
+	return ""
 }
