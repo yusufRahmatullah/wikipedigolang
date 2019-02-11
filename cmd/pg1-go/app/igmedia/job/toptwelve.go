@@ -1,8 +1,9 @@
-package igmedia
+package job
 
 import (
 	"strings"
 
+	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/igmedia"
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/igprofile"
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/jobqueue"
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/logger"
@@ -37,7 +38,7 @@ func (job *TopTwelveJob) Process(jq *jobqueue.JobQueue) bool {
 		}
 		for _, node := range topTwelve {
 			if strings.Contains(node.AccessibilityCaption, "people") || strings.Contains(node.AccessibilityCaption, "person") {
-				Save(NewIgMedia(node.ID, igID.(string), node.DisplayURL))
+				igmedia.Save(igmedia.NewIgMedia(node.ID, igID.(string), node.DisplayURL))
 			}
 		}
 		return true

@@ -99,3 +99,21 @@ func UpdateStatus(id string, status MediaStatus) bool {
 	}
 	return true
 }
+
+// UpdateStatusAll update IgMedia status of all igID
+// returns true if success
+func UpdateStatusAll(igID string, status MediaStatus) bool {
+	dataAccess := base.NewDataAccess()
+	defer dataAccess.Close()
+	col := dataAccess.GetCollection(igMediaCol)
+	info, err := col.UpdateAll(
+		bson.M{"ig_id": igID},
+		bson.M{"$set": bson.M{"status": status}},
+	)
+	if err != nil {
+		modelLogger.Fatal(fmt.Sprintf("Failed to update all IgMedia status with IG ID: %v", igID), err)
+		return false
+	}
+	modelLogger.Info(fmt.Sprintf("Success to update %v IgMedia to %v", info.Updated, status))
+	return true
+}

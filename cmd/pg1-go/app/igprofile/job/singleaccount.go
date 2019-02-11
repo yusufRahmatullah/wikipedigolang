@@ -32,6 +32,8 @@ func crawlIgID(igID string) bool {
 	success := false
 	if igp != nil {
 		success = igprofile.SaveOrUpdate(igp)
+		jq := jobqueue.NewJobQueue("TopTwelveJob", map[string]interface{}{"ig_id": igID})
+		jobqueue.Save(jq)
 	}
 	return success
 }

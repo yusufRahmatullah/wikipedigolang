@@ -26,9 +26,9 @@
             <label for="filter-status">Status</label>
             <select id="filter-status" onchange="initSearch();">
                 <option value="" selected>All</option>
-                <option value="active" selected>Active</option>
-                <option value="banned" selected>Banned</option>
-                <option value="multi" selected>Multi</option>
+                <option value="active">Active</option>
+                <option value="banned">Banned</option>
+                <option value="multi">Multi</option>
             </select>
         </div>
         <div id ="card-container" class="row">
@@ -185,7 +185,7 @@
                     <img src="`+card.pp_url+`" style="height:100%" onerror='if (this.src != "/static/default.png") this.src = "/static/default.png";'/>
                     <div class="section double-padded center">`+card.name+`</div>
                     <div class="section dark center">
-                        <a href="https://www.instagram.com/`+card.ig_id+`" target="_blank">
+                        <a href="`+'https://www.instagram.com/'+card.ig_id+`" target="_blank">
                             @`+card.ig_id+`
                         </a>
                     </div>

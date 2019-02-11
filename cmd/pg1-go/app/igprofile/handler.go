@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/jobqueue"
+
 	"github.com/globalsign/mgo/bson"
 
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/logger"
@@ -233,6 +235,8 @@ func igProfileActionHandler(c *gin.Context) {
 	suc := Update(jd.IGID, bson.M{"status": status})
 	if suc {
 		data := base.StandardJSON(fmt.Sprintf("Success to %v IG ID: %v", jd.Action, jd.IGID), nil)
+		jq := jobqueue.NewJobQueue("UpdateIgMediaStatusJob", map[string]interface{}{"ig_id": jd.IGID})
+		jobqueue.Save(jq)
 		c.JSON(http.StatusOK, data)
 	} else {
 		data := base.ErrorJSON(fmt.Sprintf("Failed to %v IG ID: %v", jd.Action, jd.IGID), nil)
