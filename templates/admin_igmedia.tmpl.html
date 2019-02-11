@@ -120,13 +120,22 @@
             .then(res => res.json())
             .then(json => {
                 if (json.status === 'OK') {
-                    document.location.reload(true);
+                    toggleAction(id, action);
                 } else {
                     alert(json.message);
                 }
             })
             .catch(err => console.error(err))
-        }        
+        }
+
+        function toggleAction(nid, act) {
+            var bg = document.getElementById('btnGroup-'+nid);
+            var status = 'shown';
+            if (act == 'hide') {
+                status = 'hidden';
+            }
+            bg.innerHTML = generateButtonsText(status, nid);
+        }
 
         function generateButtonsText(status, id) {
             var actDis = '';
@@ -141,10 +150,8 @@
                 banDis = 'disabled';
             }
             return `
-            <div class="section button-group">
                 <button class="`+actCls+`" data-id="`+id+`" onclick="doAction(this, 'show');" `+actDis+`>Show</button>
-                <button class="`+banCls+`" data-id="`+id+`" onclick="doAction(this, 'hide');" `+banDis+`>Hide</button>
-            </div>`
+                <button class="`+banCls+`" data-id="`+id+`" onclick="doAction(this, 'hide');" `+banDis+`>Hide</button>`
         }
 
         function appendCards(cards) {
@@ -159,7 +166,9 @@
                         <a href="`+'https://www.instagram.com/'+card.ig_id+`" target="_blank">@`+card.ig_id+`</a>
                     </div>
                     <div class="section center">Status: `+card.status+`</div>
-                    `+generateButtonsText(card.status, card.id)+`
+                    <div class="section button-group" id="btnGroup-`+card.id+`">
+                        `+generateButtonsText(card.status, card.id)+`
+                    </div>
                 </div>`;
                 cc.appendChild(col);
             });

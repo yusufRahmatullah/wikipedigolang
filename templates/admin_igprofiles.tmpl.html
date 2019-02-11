@@ -122,13 +122,24 @@
             .then(res => res.json())
             .then(json => {
                 if (json.status === 'OK') {
-                    document.location.reload(true);
+                    toggleAction(igid, action);
                 } else {
                     alert(json.message);
                 }
             })
             .catch(err => console.error(err))
-        }        
+        }
+
+        function toggleAction(nid, act) {
+            var bg = document.getElementById('btnGroup-'+nid);
+            var status = 'active';
+            if (act == 'ban') {
+                status = 'banned';
+            } else if (act == 'asMulti') {
+                status = 'multi';
+            }
+            bg.innerHTML = generateButtonsText(status, nid);
+        }
 
         function generateButtonsText(status, igid) {
             var actDis = '';
@@ -151,11 +162,9 @@
                 banDis = 'disabled';
             }
             return `
-            <div class="section button-group">
                 <button class="`+actCls+`" data-igId="`+igid+`" onclick="doAction(this, 'activate');" `+actDis+`>Activate</button>
                 <button class="`+banCls+`" data-igId="`+igid+`" onclick="doAction(this, 'ban');" `+banDis+`>Ban</button>
-                <button class="`+asMultiCls+`" data-igId="`+igid+`" onclick="doAction(this, 'asMulti'); `+asMultiDis+`">As Multi</button>
-            </div>`
+                <button class="`+asMultiCls+`" data-igId="`+igid+`" onclick="doAction(this, 'asMulti'); `+asMultiDis+`">As Multi</button>`
         }
 
         function appendCards(cards) {
@@ -173,7 +182,9 @@
                         </a>
                     </div>
                     <div class="section center">Status: `+card.Status+`</div>
+                    <div class="section button-group" id="btnGroup-`+card.ig_id+`">
                         `+generateButtonsText(card.Status, card.ig_id)+`
+                    </div>
                 </div>`;
                 cc.appendChild(col);
             });
