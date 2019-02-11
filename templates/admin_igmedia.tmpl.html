@@ -21,6 +21,12 @@
                 <option value="1">Ascending</option>
                 <option value="-1" selected>Descending</option>
             </select>
+            <label for="filter-status">Status</label>
+            <select id="filter-status" onchange="initSearch();">
+                <option value="" selected>All</option>
+                <option value="shown">Shown</option>
+                <option value="hidden">Hidden</option>
+            </select>
         </div>
         <div id ="card-container" class="row">
         </div>
@@ -52,7 +58,8 @@
             var query = document.getElementById('search').value;
             var sortBy = document.getElementById('sort-by').value;
             var order = document.getElementById('order-by').value;
-            var url = '/api/igmedias/all?offset='+offset+'&ig_id='+query+'&sort='+sortBy+'&order='+order;
+            var filterStatus = document.getElementById('filter-status').value;
+            var url = '/api/igmedias/all?offset='+offset+'&ig_id='+query+'&sort='+sortBy+'&order='+order+'&filterStatus='+filterStatus;
             if (urlLocks.includes(url)) {
                 return
             }

@@ -16,7 +16,15 @@ func DefineAPIRoutes(router *gin.RouterGroup) {
 	reqAdmin.Use(auth.RequiredAdmin())
 	{
 		reqAdmin.GET("/igmedias/all", func(c *gin.Context) {
-			findIgMediaHandler(c, StatusAll)
+			filterStatus := c.Query("filterStatus")
+			status := StatusAll
+			switch filterStatus {
+			case "shown":
+				status = StatusShown
+			case "hidden":
+				status = StatusHidden
+			}
+			findIgMediaHandler(c, status)
 		})
 		reqAdmin.POST("/igmedias/action", updateStatusHandler)
 	}

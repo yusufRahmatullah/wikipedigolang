@@ -131,7 +131,17 @@ func findIgProfile(c *gin.Context, status ProfileStatus) {
 }
 
 func findIgProfileAllStatusHandler(c *gin.Context) {
-	findIgProfile(c, StatusAll)
+	filterStatus := c.Query("filterStatus")
+	status := StatusAll
+	switch filterStatus {
+	case "active":
+		status = StatusActive
+	case "banned":
+		status = StatusBanned
+	case "multi":
+		status = StatusMulti
+	}
+	findIgProfile(c, status)
 }
 
 func findIgProfileHandler(c *gin.Context) {

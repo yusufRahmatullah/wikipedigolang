@@ -23,6 +23,13 @@
                 <option value="1">Ascending</option>
                 <option value="-1" selected>Descending</option>
             </select>
+            <label for="filter-status">Status</label>
+            <select id="filter-status" onchange="initSearch();">
+                <option value="" selected>All</option>
+                <option value="active" selected>Active</option>
+                <option value="banned" selected>Banned</option>
+                <option value="multi" selected>Multi</option>
+            </select>
         </div>
         <div id ="card-container" class="row">
         </div>
@@ -54,7 +61,8 @@
             var query = document.getElementById('search').value;
             var sortBy = document.getElementById('sort-by').value;
             var order = document.getElementById('order-by').value;
-            var url = '/api/igprofiles/search_all?offset='+offset+'&query='+query+'&sort='+sortBy+'&order='+order;
+            var filterStatus = document.getElementById('filter-status').value;
+            var url = '/api/igprofiles/search_all?offset='+offset+'&query='+query+'&sort='+sortBy+'&order='+order+'&filterStatus='+filterStatus;
             if (urlLocks.includes(url)) {
                 return
             }
