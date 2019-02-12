@@ -1,5 +1,10 @@
 package utils
 
+// The real author of this file is: https://github.com/benbjohnson/phantomjs
+// This file is copied to Package utils to modify the environment value
+// before running the phantomjs
+// PhantomJS run using PhantomJS buildpack: https://elements.heroku.com/buildpacks/stomita/heroku-buildpack-phantomjs
+
 import (
 	"bytes"
 	"encoding/json"
@@ -86,6 +91,7 @@ func (p *Process) Open() error {
 		cmd.Env = []string{
 			fmt.Sprintf("PORT=%d", p.Port),
 		}
+		// apt-version require additional env: "QT_QPA_PLATFORM=offscreen",
 		cmd.Stdout = p.Stdout
 		cmd.Stderr = p.Stderr
 		if err := cmd.Start(); err != nil {
