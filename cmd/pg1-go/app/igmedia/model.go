@@ -86,6 +86,13 @@ func FindIgMedia(igID string, offset, limit int, status MediaStatus, sortBy ...s
 	return igms
 }
 
+func countIgMedia(status MediaStatus) (int, error) {
+	dataAccess := base.NewDataAccess()
+	defer dataAccess.Close()
+	col := dataAccess.GetCollection(igMediaCol)
+	return col.Find(bson.M{"status": bson.M{"$regex": status}}).Count()
+}
+
 // UpdateStatus update IgMedia status
 // returns true if success
 func UpdateStatus(id string, status MediaStatus) bool {

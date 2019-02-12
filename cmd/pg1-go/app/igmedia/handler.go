@@ -93,3 +93,14 @@ func updateStatusHandler(c *gin.Context) {
 		c.JSON(http.StatusBadGateway, data)
 	}
 }
+
+func countIgMediaHandler(c *gin.Context, status MediaStatus) {
+	n, err := countIgMedia(status)
+	if err == nil {
+		data := base.StandardJSON("", n)
+		c.JSON(http.StatusOK, data)
+	} else {
+		data := base.ErrorJSON("", err.Error())
+		c.JSON(http.StatusInternalServerError, data)
+	}
+}

@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html>
-    {{template "header.tmpl.html" "Igo Profiles"}}
+    {{template "header.tmpl.html" "Igo Medias"}}
 <body onload="reset();">
-    <h1 class="center">IGO Medias</h1>
+    <h1 id="subtitle" class="center">IGO Medias</h1>
     <div class="container">
         <div class="center">
             <input id="search" placeholder="Search IG ID here..." oninput="initSearch();" style="position: absoulte;"/>
@@ -82,7 +82,18 @@
             })
         }
 
+        function initCount() {
+            fetch('/api/igmedias/count')
+            .then(res => res.json())
+            .then(json => {
+                if (json.status == 'OK') {
+                    document.getElementById('subtitle').innerHTML = 'IGO Medias <sub>('+json.data+' medias)</sub>';
+                }
+            })
+        }
+
         function reset() {
+            initCount();
             offset = 0;
             document.getElementById('search').value = '';
             initSearch();

@@ -12,9 +12,15 @@ func DefineAPIRoutes(router *gin.RouterGroup) {
 	router.GET("/igmedias", func(c *gin.Context) {
 		findIgMediaHandler(c, StatusShown)
 	})
+	router.GET("/igmedias/count", func(c *gin.Context) {
+		countIgMediaHandler(c, StatusShown)
+	})
 	reqAdmin := router.Group("")
 	reqAdmin.Use(auth.RequiredAdmin())
 	{
+		reqAdmin.GET("igmedias/count_all", func(c *gin.Context) {
+			countIgMediaHandler(c, StatusAll)
+		})
 		reqAdmin.GET("/igmedias/all", func(c *gin.Context) {
 			filterStatus := c.Query("filterStatus")
 			status := StatusAll

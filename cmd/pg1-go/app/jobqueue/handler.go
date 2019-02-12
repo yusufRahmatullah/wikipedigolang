@@ -107,6 +107,17 @@ func requeuePostponedHandler(c *gin.Context) {
 	}
 }
 
+func countPostponedJobsHandler(c *gin.Context) {
+	n, err := countPostponedJobs()
+	if err == nil {
+		data := base.StandardJSON("", n)
+		c.JSON(http.StatusOK, data)
+	} else {
+		data := base.ErrorJSON("", err.Error())
+		c.JSON(http.StatusInternalServerError, data)
+	}
+}
+
 // jobQueueIndexView render JobQueue form
 func jobQueueIndexView(c *gin.Context) {
 	c.HTML(http.StatusOK, "jobqueue.tmpl.html", nil)

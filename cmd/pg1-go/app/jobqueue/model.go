@@ -202,6 +202,13 @@ func GetAllPostponed() []JobQueue {
 	return jobQueues
 }
 
+func countPostponedJobs() (int, error) {
+	dataAccess := base.NewDataAccess()
+	defer dataAccess.Close()
+	col := dataAccess.GetCollection(jobQueueCol)
+	return col.Find(bson.M{"status": StatusPostponed}).Count()
+}
+
 // DeletePostponed remove postponed JobQueue instance from database
 func DeletePostponed(jq *JobQueue) bool {
 	dataAccess := base.NewDataAccess()

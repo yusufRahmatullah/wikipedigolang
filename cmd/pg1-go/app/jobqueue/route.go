@@ -13,6 +13,7 @@ func DefineAPIRoutes(router *gin.RouterGroup) {
 		reqAdmin.GET("/available_jobs", getAvailableJobsHandler)
 		reqAdmin.POST("/batch_add", batchAddHandler)
 		reqAdmin.POST("/job_queue", newJobQueueHandler)
+		reqAdmin.GET("/postponed_jobs/count", countPostponedJobsHandler)
 		reqAdmin.GET("/postponed_jobs", getPostponedJobsHandler)
 		reqAdmin.DELETE("/postponed_jobs/:job_id", deletePostponedHandler)
 		reqAdmin.POST("/requeue_postponed_jobs", requeuePostponedHandler)

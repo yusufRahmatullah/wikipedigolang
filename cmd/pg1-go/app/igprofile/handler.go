@@ -244,6 +244,17 @@ func igProfileActionHandler(c *gin.Context) {
 	}
 }
 
+func countIgProfileHandler(c *gin.Context, status ProfileStatus) {
+	n, err := countIgProfiles(status)
+	if err == nil {
+		data := base.StandardJSON("Success to count all IgProfiles", n)
+		c.JSON(http.StatusOK, data)
+	} else {
+		data := base.ErrorJSON("Failed to count all IgProfiles", err.Error())
+		c.JSON(http.StatusInternalServerError, data)
+	}
+}
+
 /////////////////////////////////
 // IgProfile Views
 /////////////////////////////////

@@ -161,6 +161,13 @@ func GetAll(offset, limit int, status ProfileStatus, sortBy ...string) []IgProfi
 	return igps
 }
 
+func countIgProfiles(status ProfileStatus) (int, error) {
+	dataAccess := base.NewDataAccess()
+	defer dataAccess.Close()
+	col := dataAccess.GetCollection(igProfileCol)
+	return col.Find(bson.M{"status": bson.M{"$regex": status}}).Count()
+}
+
 // GetIgProfile get IgProfile instance in database by its IGID
 func GetIgProfile(igID string) *IgProfile {
 	dataAccess := base.NewDataAccess()

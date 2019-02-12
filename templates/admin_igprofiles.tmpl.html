@@ -2,7 +2,7 @@
 <html>
     {{template "header.tmpl.html" "Igo Profiles"}}
 <body onload="reset();">
-    <h1 class="center">IGO Profiles</h1>
+    <h1 id="subtitle" class="center">IGO Profiles</h1>
     <div class="container">
         <div class="center">
             <input id="search" placeholder="Search IGO here..." oninput="initSearch();" style="position: absoulte;"/>
@@ -93,7 +93,18 @@
             })
         }
 
+        function initCount() {
+            fetch('/api/igprofiles/count_all')
+            .then(res => res.json())
+            .then(json => {
+                if (json.status == 'OK') {
+                    document.getElementById('subtitle').innerHTML = 'IGO Profiles <sub>('+json.data+' profiles)</sub>';
+                }
+            })
+        }
+
         function reset() {
+            initCount();
             offset = 0;
             document.getElementById('search').value = '';
             initSearch();

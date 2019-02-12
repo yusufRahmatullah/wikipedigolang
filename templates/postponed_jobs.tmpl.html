@@ -1,14 +1,29 @@
 <!DOCTYPE html>
 <html>
     {{template "header.tmpl.html" "Postponed Jobs"}}
-    <body onload="loadData();">
-        <h1 class="center">Postponed JobQueue</h1>
+    <body onload="reset();">
+        <h1 id="subtitle" class="center">Postponed JobQueue</h1>
         <div class="container">
             <div class="card-container">
 
             </div>
         </div>
         <script>
+            function initCount() {
+                fetch('/api/postponed_jobs/count')
+                .then(res => res.json())
+                .then(json => {
+                    if (json.status == 'OK') {
+                        document.getElementById('subtitle').innerHTML = 'Postponed JobQueue <sub>('+json.data+' jobs)</sub>';
+                    }
+                })
+            }
+
+            function reset() {
+                initCount();
+                loadData();
+            }
+
             function loadData() {
                 fetch('/api/postponed_jobs', {
                     method: 'GET',
