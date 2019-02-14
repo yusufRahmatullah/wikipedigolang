@@ -6,7 +6,6 @@ import (
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/igprofile"
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/jobqueue"
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/logger"
-	"github.com/globalsign/mgo/bson"
 )
 
 var (
@@ -31,7 +30,7 @@ func updateIgID(igp *igprofile.IgProfile) {
 	igp2 := igprofile.FetchIgProfile(igID)
 	if igp2 != nil {
 		changes := igprofile.GenerateChanges(igp2)
-		suc := igprofile.Update(igID, bson.M{"$set": changes})
+		suc := igprofile.Update(igID, changes)
 		if suc == "" {
 			ujLogger.Debug(fmt.Sprintf("Success to update IG ID: %v", igID))
 		} else {
