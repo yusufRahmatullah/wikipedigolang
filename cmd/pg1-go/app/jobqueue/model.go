@@ -195,6 +195,7 @@ func GetAllPostponed() []JobQueue {
 	var jobQueues []JobQueue
 	err := col.Find(bson.M{
 		"status": StatusPostponed,
+		"name":   bson.M{"$nin": []interface{}{"PostMediaJob", "PostAccountJob"}},
 	}).Limit(JobLimit).All(&jobQueues)
 	if err != nil {
 		modelLogger.Fatal("Failed to get all JobQueue", err)
