@@ -31,6 +31,8 @@ func init() {
 	searchNameJob := igProfileJob.NewSearchNameJob()
 	topTwelveJob := igMediaJob.NewTopTwelveJob()
 	updateStatusJob := igMediaJob.NewUpdateIgMediaStatusJob()
+	accFromPostJob := igProfileJob.NewAccountFromPostJob()
+	mediaFromPostJob := igMediaJob.NewMediaFromPostJob()
 	jobAssigner.Register(singleAccountJob)
 	jobAssigner.Register(updaterJob)
 	jobAssigner.Register(multiAccountJob)
@@ -39,6 +41,8 @@ func init() {
 	jobAssigner.Register(searchNameJob)
 	jobAssigner.Register(topTwelveJob)
 	jobAssigner.Register(updateStatusJob)
+	jobAssigner.Register(accFromPostJob)
+	jobAssigner.Register(mediaFromPostJob)
 }
 
 func getWaitTime() int {

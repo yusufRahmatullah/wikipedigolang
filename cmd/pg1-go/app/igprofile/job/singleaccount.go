@@ -32,8 +32,13 @@ func crawlIgID(igID string) string {
 	success := ""
 	if igp != nil {
 		success = igprofile.SaveOrUpdate(igp)
-		jq := jobqueue.NewJobQueue("TopTwelveJob", map[string]interface{}{"ig_id": igID})
-		jobqueue.Save(jq)
+		if success == "" {
+			igp = igprofile.GetIgProfile(igID)
+			if igp.Status == igprofile.StatusActive {
+				jq := jobqueue.NewJobQueue("PostMediaJob", map[string]interface{}{"ig_id": igID})
+				success = jobqueue.Save(jq)
+			}
+		}
 	}
 	return success
 }

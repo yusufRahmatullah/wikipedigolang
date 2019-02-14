@@ -25,7 +25,11 @@ func (job *BanAccountJob) Process(jq *jobqueue.JobQueue) string {
 	igID, ok := params["ig_id"]
 	if ok {
 		cleanID := igprofile.CleanIgIDParams(igID.(string))
-		return igprofile.DeleteIgProfile(cleanID, false)
+		suc := igprofile.DeleteIgProfile(cleanID, false)
+		if suc == "" {
+			jq := jobqueue.NewJobQueue("UpdateIgMediaStatusJob", map[string]interface{}{"ig_id": igID.(string)})
+			jobqueue.Save(jq)
+		}
 	}
 	return "Param ig_id not found"
 }

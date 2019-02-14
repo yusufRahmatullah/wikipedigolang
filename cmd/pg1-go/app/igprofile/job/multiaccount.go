@@ -5,13 +5,11 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"time"
 
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/igprofile"
 
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/jobqueue"
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/logger"
-	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/utils"
 )
 
 const maJsAsyncFuncTemp = `function() {
@@ -90,21 +88,9 @@ func processPostsData(data map[string]interface{}) {
 	}
 }
 
-func crawlMultiIgID(igID string) {
-	wpw := utils.NewWebPageWrapper(majLogger)
-	if wpw != nil {
-		defer wpw.Close()
-		wpw.OnAsyncEvaluated(func() {
-			majLogger.Debug(fmt.Sprintf("Async Func success. Waiting for %v seconds", asyncWaitTime))
-			time.Sleep(time.Duration(asyncWaitTime) * time.Second)
-			wpw.Evaluate(maJsSyncFunc)
-		})
-		wpw.OnEvaluated(func(data map[string]interface{}) {
-			processPostsData(data)
-		})
-		wpw.OpenURL(fmt.Sprintf("https://www.instagram.com/%v", igID))
-		wpw.EvaluateAsync(maJsAsyncFunc)
-	}
+func crawlMultiIgID(igID string) string {
+	jq := jobqueue.NewJobQueue("PostAccountJob", map[string]interface{}{"ig_id": igID})
+	return jobqueue.Save(jq)
 }
 
 // Process executes JobQueue with the given params
@@ -119,8 +105,7 @@ func (job *MultiAccountJob) Process(jq *jobqueue.JobQueue) string {
 		igp := bd.SetIGID(cleanID).SetStatus(igprofile.StatusMulti).Build()
 		suc := igprofile.Save(igp)
 		majLogger.Info(fmt.Sprintf("Save multi account: %v", suc))
-		crawlMultiIgID(cleanID)
-		return ""
+		return crawlMultiIgID(cleanID)
 	}
 	return "Param ig_id not found"
 

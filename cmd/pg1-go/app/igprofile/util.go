@@ -7,17 +7,26 @@ import (
 	"regexp"
 	"strings"
 
+	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/igmedia"
+
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/logger"
 	"github.com/imroc/req"
 )
 
+const (
+	GraphSideCar = "GraphSideCar"
+	GraphImage   = "GraphImage"
+)
+
 var (
 	matcher    *regexp.Regexp
+	accMatcher *regexp.Regexp
 	utilLogger = logger.NewLogger("IgProfileUtil", false, true)
 )
 
 func init() {
-	matcher = regexp.MustCompile(`<script type="text/javascript">window._sharedData = ([^<>]*)</script>`)
+	matcher = regexp.MustCompile(`<script type="text/javascript">\s?window._sharedData\s?=\s?([^<>]*)</script>`)
+	accMatcher = regexp.MustCompile(`@[\w_]+`)
 }
 
 // IgData root of ig data
@@ -28,6 +37,7 @@ type IgData struct {
 // HasProfilePage node with key ProfilePage
 type HasProfilePage struct {
 	ProfilePage []HasGraphql `json:"ProfilePage"`
+	PostPage    []HasGraphql `json:"PostPafe`
 }
 
 // HasGraphql node with key graphql
@@ -37,7 +47,15 @@ type HasGraphql struct {
 
 // HasUser node with key user
 type HasUser struct {
-	User UserData `json:"user"`
+	User           UserData       `json:"user"`
+	ShortcodeMedia ShortcodeMedia `json:"shortcode_media"`
+}
+
+// ShortcodeMedia node with key shortcode_media
+type ShortcodeMedia struct {
+	Caption  MediaData `json:"edge_media_to_caption"`
+	TypeName string    `json:"__typename"`
+	Media    MediaData `json:"edge_sidecar_to_children"`
 }
 
 // UserData node with many keys
@@ -66,11 +84,107 @@ type NodeData struct {
 	ID                   string `json:"id"`
 	DisplayURL           string `json:"display_url"`
 	AccessibilityCaption string `json:"accessibility_caption"`
+	Text                 string `json:"text"`
 }
 
 // HasCount node with key count
 type HasCount struct {
 	Count int `json:"count"`
+}
+
+// FetchMediaFromPost fetch Ig Media from post of IG ID
+// Returns Ig Medias and empty string if success
+// otherwise returns empty array and error message
+func FetchMediaFromPost(igID string, postID string) ([]*igmedia.IgMedia, string) {
+	var retVals []*igmedia.IgMedia
+	postID = strings.Trim(postID, " ")
+	if postID == "" {
+		return retVals, "Post ID is empty"
+	}
+	r := req.New()
+	resp, err := r.Get(fmt.Sprintf("https://www.instagram.com%s", postID))
+	if err == nil {
+		code := resp.Response().StatusCode
+		if code == http.StatusNotFound {
+			return retVals, "Post ID not exist"
+		}
+		bodyText := resp.String()
+		matches := matcher.FindStringSubmatch(bodyText)
+		if len(matches) < 2 {
+			utilLogger.Fatal(fmt.Sprintf("Failed to match sharedData on Post ID: %s", postID), err)
+			return retVals, "Failed to match sharedData"
+		}
+		sharedData := matches[1]
+		if sharedData == "" {
+			return retVals, "sharedData is empty"
+		}
+		sharedData = sharedData[:len(sharedData)-1]
+		var data IgData
+		err := json.Unmarshal([]byte(sharedData), &data)
+		if err != nil {
+			utilLogger.Fatal(fmt.Sprintf("Failed to parse sharedData on Post ID: %s", postID), err)
+			return retVals, "Failed to parse shared data"
+		}
+		sc := data.EntryData.PostPage[0].Graphql.ShortcodeMedia
+		if sc.TypeName == GraphSideCar {
+			for _, media := range sc.Media.Edges {
+				node := media.Node
+				caption := node.AccessibilityCaption
+				if strings.Contains(caption, "people") || strings.Contains(caption, "person") {
+					igm := igmedia.NewIgMedia(node.ID, igID, node.DisplayURL)
+					retVals = append(retVals, igm)
+				}
+			}
+		} else if sc.TypeName == GraphImage {
+
+		}
+		return retVals, ""
+	}
+	return retVals, err.Error()
+}
+
+// FetchAccountFromPost fetch IG IDs from post
+// Returns IG IDs and empty string if success
+// otherwise returns empty array and error message
+func FetchAccountFromPost(postID string) ([]string, string) {
+	var retVals []string
+	postID = strings.Trim(postID, " ")
+	if postID == "" {
+		return retVals, "Post ID is empty"
+	}
+	r := req.New()
+	resp, err := r.Get(fmt.Sprintf("https://www.instagram.com%s", postID))
+	if err == nil {
+		code := resp.Response().StatusCode
+		if code == http.StatusNotFound {
+			return retVals, "Post ID not exist"
+		}
+		bodyText := resp.String()
+		matches := matcher.FindStringSubmatch(bodyText)
+		if len(matches) < 2 {
+			utilLogger.Fatal(fmt.Sprintf("Failed to match sharedData on Post ID: %s", postID), err)
+			return retVals, "Failed to match sharedData"
+		}
+		sharedData := matches[1]
+		if sharedData == "" {
+			return retVals, "sharedData is empty"
+		}
+		sharedData = sharedData[:len(sharedData)-1]
+		var data IgData
+		err := json.Unmarshal([]byte(sharedData), &data)
+		if err != nil {
+			utilLogger.Fatal(fmt.Sprintf("Failed to parse sharedData on Post ID: %s", postID), err)
+			return retVals, "Failed to parse shared data"
+		}
+		sc := data.EntryData.PostPage[0].Graphql.ShortcodeMedia
+		edges := sc.Caption.Edges
+		for _, edge := range edges {
+			accs := accMatcher.FindAllString(edge.Node.Text, -1)
+			retVals = append(retVals, accs...)
+		}
+		return retVals, ""
+	}
+	return retVals, err.Error()
 }
 
 // TopTwelveMedia to get top 12 media's URL of IgProfile
@@ -116,7 +230,7 @@ func TopTwelveMedia(igID string) ([]NodeData, string) {
 		}
 		return retVals, ""
 	}
-	return nil, "Failed to fetch"
+	return nil, err.Error()
 }
 
 // FetchIgProfile to fetch Ig Profile information from IG
