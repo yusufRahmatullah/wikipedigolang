@@ -104,28 +104,72 @@ func Update(igID string, changes map[string]interface{}) string {
 	return "Failed to update IgProfile"
 }
 
+type changeBuilder struct {
+	igp       *IgProfile
+	name      string
+	followers int
+	following int
+	posts     int
+	ppURL     int
+	status    ProfileStatus
+	changes   gin.H
+}
+
+func (cb *changeBuilder) setIgp(igp *IgProfile) {
+	cb.igp = igp
+	cb.changes = gin.H{}
+}
+
+func (cb *changeBuilder) checkName() {
+	if cb.igp.Name != "" {
+		cb.changes["name"] = cb.igp.Name
+	}
+}
+
+func (cb *changeBuilder) checkFollowers() {
+	if cb.igp.Followers > 0 {
+		cb.changes["followers"] = cb.igp.Followers
+	}
+}
+
+func (cb *changeBuilder) checkFollowing() {
+	if cb.igp.Following > 0 {
+		cb.changes["following"] = cb.igp.Following
+	}
+}
+
+func (cb *changeBuilder) checkPostss() {
+	if cb.igp.Posts > 0 {
+		cb.changes["posts"] = cb.igp.Posts
+	}
+}
+
+func (cb *changeBuilder) checkURL() {
+	if cb.igp.PpURL != "" {
+		cb.changes["pp_url"] = cb.igp.PpURL
+	}
+}
+
+func (cb *changeBuilder) checkStatus() {
+	if cb.igp.Status != "" {
+		cb.changes["status"] = cb.igp.Status
+	}
+}
+
+func (cb *changeBuilder) getChanges() gin.H {
+	return cb.changes
+}
+
 // GenerateChanges build hash map of non-empty igp's attributes
 func GenerateChanges(igp *IgProfile) map[string]interface{} {
-	changes := gin.H{}
-	if igp.Name != "" {
-		changes["name"] = igp.Name
-	}
-	if igp.Followers > 0 {
-		changes["followers"] = igp.Followers
-	}
-	if igp.Following > 0 {
-		changes["following"] = igp.Following
-	}
-	if igp.Posts > 0 {
-		changes["posts"] = igp.Posts
-	}
-	if igp.PpURL != "" {
-		changes["pp_url"] = igp.PpURL
-	}
-	if igp.Status != "" {
-		changes["status"] = igp.Status
-	}
-	return changes
+	var cb changeBuilder
+	cb.setIgp(igp)
+	cb.checkName()
+	cb.checkFollowers()
+	cb.checkFollowing()
+	cb.checkURL()
+	cb.checkStatus()
+	return cb.getChanges()
 }
 
 // SaveOrUpdate writes IgProfile instance to database

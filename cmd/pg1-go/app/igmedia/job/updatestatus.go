@@ -14,7 +14,7 @@ var (
 // UpdateIgMediaStatusJob is the job for get top twelve post of IgProfile
 type UpdateIgMediaStatusJob struct{}
 
-// NewUpdateIgMediaStatusJob instantiate TopTwelveJob instance
+// NewUpdateIgMediaStatusJob instantiate UpdateIgMediaJob instance
 func NewUpdateIgMediaStatusJob() *UpdateIgMediaStatusJob {
 	return &UpdateIgMediaStatusJob{}
 }

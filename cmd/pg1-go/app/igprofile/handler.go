@@ -208,6 +208,21 @@ func deleteMultiAccHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, data)
 }
 
+func getStatusFromAction(action string) string {
+	status := "active"
+	switch action {
+	case "ban":
+		status = "banned"
+	case "asMulti":
+		status = "multi"
+	case "activate":
+		status = "active"
+	default:
+		status = "active"
+	}
+	return status
+}
+
 func igProfileActionHandler(c *gin.Context) {
 	jd := struct {
 		IGID   string `json:"ig_id"`
@@ -221,17 +236,7 @@ func igProfileActionHandler(c *gin.Context) {
 		data := base.ErrorJSON("Param ig_id can't be empty", nil)
 		c.JSON(http.StatusBadRequest, data)
 	}
-	status := "active"
-	switch jd.Action {
-	case "ban":
-		status = "banned"
-	case "asMulti":
-		status = "multi"
-	case "activate":
-		status = "active"
-	default:
-		status = "active"
-	}
+	status := getStatusFromAction(jd.Action)
 	suc := Update(jd.IGID, bson.M{"status": status})
 	if suc == "" {
 		data := base.StandardJSON(fmt.Sprintf("Success to %v IG ID: %v", jd.Action, jd.IGID), nil)

@@ -51,6 +51,16 @@ func loginView(c *gin.Context) {
 	c.HTML(http.StatusOK, "login.tmpl.html", nil)
 }
 
+func validateLoginData(username, password string) string {
+	if username == "" || password == "" {
+		return "Parameters can't be empty"
+	}
+	if !matcher.MatchString(username) {
+		return "Invalid username"
+	}
+	return ""
+}
+
 func login(c *gin.Context) {
 	session := sessions.Default(c)
 	loginData := struct {
@@ -63,14 +73,9 @@ func login(c *gin.Context) {
 	c.BindJSON(&loginData)
 	username := strings.Trim(loginData.Username, " ")
 	password := strings.Trim(loginData.Password, " ")
-
-	if username == "" || password == "" {
-		data := base.ErrorJSON("Parameters can't be empty", nil)
-		c.JSON(http.StatusUnauthorized, data)
-		return
-	}
-	if !matcher.MatchString(username) {
-		data := base.ErrorJSON("Invalid username", nil)
+	errMsg := validateLoginData(username, password)
+	if errMsg != "" {
+		data := base.ErrorJSON(errMsg, nil)
 		c.JSON(http.StatusUnauthorized, data)
 		return
 	}
@@ -79,24 +84,25 @@ func login(c *gin.Context) {
 		handleLogger.Info(fmt.Sprintf("Failed to find username: %s", username))
 		data := base.ErrorJSON("Invalid Username or Password", nil)
 		c.JSON(http.StatusUnauthorized, data)
-	} else {
-		suc := comparePasswords(user.Password, []byte(password))
-		if suc {
-			session.Set("sid", username)
-			err := session.Save()
-			if err == nil {
-				data := base.StandardJSON("Success", nil)
-				c.JSON(http.StatusOK, data)
-			} else {
-				handleLogger.Fatal("Failed to save session", err)
-				data := base.ErrorJSON("Failed to save session", nil)
-				c.JSON(http.StatusNotModified, data)
-			}
-		} else {
-			data := base.ErrorJSON("Invalid Username or Password", nil)
-			c.JSON(http.StatusUnauthorized, data)
-		}
+		return
 	}
+	suc := comparePasswords(user.Password, []byte(password))
+	if suc {
+		session.Set("sid", username)
+		err := session.Save()
+		if err == nil {
+			data := base.StandardJSON("Success", nil)
+			c.JSON(http.StatusOK, data)
+			return
+		}
+		handleLogger.Fatal("Failed to save session", err)
+		data := base.ErrorJSON("Failed to save session", nil)
+		c.JSON(http.StatusNotModified, data)
+		return
+	}
+	data := base.ErrorJSON("Invalid Username or Password", nil)
+	c.JSON(http.StatusUnauthorized, data)
+	return
 }
 
 func logout(c *gin.Context) {

@@ -2,6 +2,7 @@ package igprofile
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -14,8 +15,10 @@ import (
 )
 
 const (
+	// GraphSideCar is TypeName of ShortcodeMedia that represents multiple media in one post
 	GraphSideCar = "GraphSideCar"
-	GraphImage   = "GraphImage"
+	// GraphImage is TypeName of ShortcodeMedia that represents one image in one post
+	GraphImage = "GraphImage"
 )
 
 var (
@@ -37,7 +40,7 @@ type IgData struct {
 // HasProfilePage node with key ProfilePage
 type HasProfilePage struct {
 	ProfilePage []HasGraphql `json:"ProfilePage"`
-	PostPage    []HasGraphql `json:"PostPafe`
+	PostPage    []HasGraphql `json:"PostPage"`
 }
 
 // HasGraphql node with key graphql
@@ -53,9 +56,13 @@ type HasUser struct {
 
 // ShortcodeMedia node with key shortcode_media
 type ShortcodeMedia struct {
-	Caption  MediaData `json:"edge_media_to_caption"`
-	TypeName string    `json:"__typename"`
-	Media    MediaData `json:"edge_sidecar_to_children"`
+	Caption              MediaData `json:"edge_media_to_caption"`
+	TypeName             string    `json:"__typename"`
+	Media                MediaData `json:"edge_sidecar_to_children"`
+	ID                   string    `json:"id"`
+	DisplayURL           string    `json:"display_url"`
+	AccessibilityCaption string    `json:"accessibility_caption"`
+	Text                 string    `json:"text"`
 }
 
 // UserData node with many keys
@@ -92,6 +99,62 @@ type HasCount struct {
 	Count int `json:"count"`
 }
 
+func getDataFromResponse(resp *req.Resp) (*IgData, string) {
+	code := resp.Response().StatusCode
+	if code == http.StatusNotFound {
+		return nil, "Post ID not exist"
+	}
+	bodyText := resp.String()
+	matches := matcher.FindStringSubmatch(bodyText)
+	if len(matches) < 2 {
+		return nil, "Failed to match sharedData"
+	}
+	sharedData := matches[1]
+	if sharedData == "" {
+		return nil, "sharedData is empty"
+	}
+	var data IgData
+	sharedData = sharedData[:len(sharedData)-1]
+	err := json.Unmarshal([]byte(sharedData), &data)
+	if err != nil {
+		return nil, "Failed to parse shared data"
+	}
+	return &data, ""
+}
+
+func processGraphSideCar(sc ShortcodeMedia, igID string) []*igmedia.IgMedia {
+	var retVals []*igmedia.IgMedia
+	for _, media := range sc.Media.Edges {
+		node := media.Node
+		caption := node.AccessibilityCaption
+		if strings.Contains(caption, "people") || strings.Contains(caption, "person") {
+			igm := igmedia.NewIgMedia(node.ID, igID, node.DisplayURL)
+			retVals = append(retVals, igm)
+		}
+	}
+	return retVals
+}
+
+func processGraphImage(sc ShortcodeMedia, igID string) []*igmedia.IgMedia {
+	var retVals []*igmedia.IgMedia
+	if strings.Contains(sc.AccessibilityCaption, "people") || strings.Contains(sc.AccessibilityCaption, "person") {
+		igm := igmedia.NewIgMedia(sc.ID, igID, sc.DisplayURL)
+		retVals = append(retVals, igm)
+	}
+	return retVals
+}
+
+func getMediasFromData(data *IgData, igID string) []*igmedia.IgMedia {
+	var retVals []*igmedia.IgMedia
+	sc := data.EntryData.PostPage[0].Graphql.ShortcodeMedia
+	if sc.TypeName == GraphSideCar {
+		retVals = processGraphSideCar(sc, igID)
+	} else if sc.TypeName == GraphImage {
+		retVals = processGraphImage(sc, igID)
+	}
+	return retVals
+}
+
 // FetchMediaFromPost fetch Ig Media from post of IG ID
 // Returns Ig Medias and empty string if success
 // otherwise returns empty array and error message
@@ -104,40 +167,12 @@ func FetchMediaFromPost(igID string, postID string) ([]*igmedia.IgMedia, string)
 	r := req.New()
 	resp, err := r.Get(fmt.Sprintf("https://www.instagram.com%s", postID))
 	if err == nil {
-		code := resp.Response().StatusCode
-		if code == http.StatusNotFound {
-			return retVals, "Post ID not exist"
+		data, errStr := getDataFromResponse(resp)
+		if errStr != "" {
+			utilLogger.Fatal("Failed to get data from response", errors.New(errStr))
+			return retVals, errStr
 		}
-		bodyText := resp.String()
-		matches := matcher.FindStringSubmatch(bodyText)
-		if len(matches) < 2 {
-			utilLogger.Fatal(fmt.Sprintf("Failed to match sharedData on Post ID: %s", postID), err)
-			return retVals, "Failed to match sharedData"
-		}
-		sharedData := matches[1]
-		if sharedData == "" {
-			return retVals, "sharedData is empty"
-		}
-		sharedData = sharedData[:len(sharedData)-1]
-		var data IgData
-		err := json.Unmarshal([]byte(sharedData), &data)
-		if err != nil {
-			utilLogger.Fatal(fmt.Sprintf("Failed to parse sharedData on Post ID: %s", postID), err)
-			return retVals, "Failed to parse shared data"
-		}
-		sc := data.EntryData.PostPage[0].Graphql.ShortcodeMedia
-		if sc.TypeName == GraphSideCar {
-			for _, media := range sc.Media.Edges {
-				node := media.Node
-				caption := node.AccessibilityCaption
-				if strings.Contains(caption, "people") || strings.Contains(caption, "person") {
-					igm := igmedia.NewIgMedia(node.ID, igID, node.DisplayURL)
-					retVals = append(retVals, igm)
-				}
-			}
-		} else if sc.TypeName == GraphImage {
-
-		}
+		retVals = getMediasFromData(data, igID)
 		return retVals, ""
 	}
 	return retVals, err.Error()
@@ -155,26 +190,10 @@ func FetchAccountFromPost(postID string) ([]string, string) {
 	r := req.New()
 	resp, err := r.Get(fmt.Sprintf("https://www.instagram.com%s", postID))
 	if err == nil {
-		code := resp.Response().StatusCode
-		if code == http.StatusNotFound {
-			return retVals, "Post ID not exist"
-		}
-		bodyText := resp.String()
-		matches := matcher.FindStringSubmatch(bodyText)
-		if len(matches) < 2 {
-			utilLogger.Fatal(fmt.Sprintf("Failed to match sharedData on Post ID: %s", postID), err)
-			return retVals, "Failed to match sharedData"
-		}
-		sharedData := matches[1]
-		if sharedData == "" {
-			return retVals, "sharedData is empty"
-		}
-		sharedData = sharedData[:len(sharedData)-1]
-		var data IgData
-		err := json.Unmarshal([]byte(sharedData), &data)
-		if err != nil {
-			utilLogger.Fatal(fmt.Sprintf("Failed to parse sharedData on Post ID: %s", postID), err)
-			return retVals, "Failed to parse shared data"
+		data, errStr := getDataFromResponse(resp)
+		if errStr != "" {
+			utilLogger.Fatal("Failed to get data from response", errors.New(errStr))
+			return retVals, errStr
 		}
 		sc := data.EntryData.PostPage[0].Graphql.ShortcodeMedia
 		edges := sc.Caption.Edges
@@ -187,52 +206,6 @@ func FetchAccountFromPost(postID string) ([]string, string) {
 	return retVals, err.Error()
 }
 
-// TopTwelveMedia to get top 12 media's URL of IgProfile
-// with acessibility caption contains people
-// Return array of NodeData and error message if error occurred
-func TopTwelveMedia(igID string) ([]NodeData, string) {
-	igID = strings.Trim(igID, " ")
-	if igID == "" {
-		return nil, "IG ID is empty"
-	}
-	r := req.New()
-	resp, err := r.Get(fmt.Sprintf("https://www.instagram.com/%s", igID))
-	if err == nil {
-		code := resp.Response().StatusCode
-		if code == http.StatusNotFound {
-			return nil, "IG ID not exist"
-		}
-		bodyText := resp.String()
-		matches := matcher.FindStringSubmatch(bodyText)
-		if len(matches) < 2 {
-			utilLogger.Fatal(fmt.Sprintf("Failed to match sharedData on IG ID: %s", igID), err)
-			return nil, "Failed to match sharedData"
-		}
-		sharedData := matches[1]
-		if sharedData == "" {
-			return nil, "sharedData is empty"
-		}
-		sharedData = sharedData[:len(sharedData)-1]
-		var data IgData
-		err := json.Unmarshal([]byte(sharedData), &data)
-		if err != nil {
-			utilLogger.Fatal(fmt.Sprintf("Failed to parse sharedData on IG ID: %s", igID), err)
-			return nil, "Failed to parse shared data"
-		}
-		user := data.EntryData.ProfilePage[0].Graphql.User
-		if user.IsPrivate {
-			return nil, "IG is private"
-		}
-		var retVals []NodeData
-		edges := user.EdgeOwnerMedia.Edges
-		for _, edge := range edges {
-			retVals = append(retVals, edge.Node)
-		}
-		return retVals, ""
-	}
-	return nil, err.Error()
-}
-
 // FetchIgProfile to fetch Ig Profile information from IG
 func FetchIgProfile(igID string) *IgProfile {
 	igID = strings.Trim(igID, " ")
@@ -243,27 +216,9 @@ func FetchIgProfile(igID string) *IgProfile {
 	r := req.New()
 	resp, err := r.Get(fmt.Sprintf("https://www.instagram.com/%s", igID))
 	if err == nil {
-		code := resp.Response().StatusCode
-		if code == http.StatusNotFound {
-			utilLogger.Fatal(fmt.Sprintf("IG ID %v not exist", igID), err)
-			return nil
-		}
-		bodyText := resp.String()
-		matches := matcher.FindStringSubmatch(bodyText)
-		if len(matches) < 2 {
-			utilLogger.Fatal(fmt.Sprintf("Failed to match sharedData on IG ID: %s", igID), err)
-			return nil
-		}
-		sharedData := matches[1]
-		if sharedData == "" {
-			utilLogger.Fatal("sharedData is empty", nil)
-			return nil
-		}
-		sharedData = sharedData[:len(sharedData)-1]
-		var data IgData
-		err := json.Unmarshal([]byte(sharedData), &data)
-		if err != nil {
-			utilLogger.Fatal(fmt.Sprintf("Failed to parse sharedData on IG ID: %s", igID), err)
+		data, errStr := getDataFromResponse(resp)
+		if errStr != "" {
+			utilLogger.Fatal("Failed to get data from response", errors.New(errStr))
 			return nil
 		}
 		user := data.EntryData.ProfilePage[0].Graphql.User
