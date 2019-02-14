@@ -34,8 +34,9 @@ func (job *AccountFromPostJob) Process(jq *jobqueue.JobQueue) string {
 				"SingleAccountJob",
 				map[string]interface{}{"ig_id": acc},
 			)
-			return jobqueue.Save(jq)
+			jobqueue.Save(jq)
 		}
+		return ""
 	}
 	return "Param post_id not found"
 }

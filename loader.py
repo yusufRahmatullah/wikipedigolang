@@ -11,7 +11,7 @@ import requests
 from selenium.common.exceptions import StaleElementReferenceException
 from selenium.webdriver import PhantomJS
 
-MAX_CRAWL_SECS = 1000
+MAX_CRAWL_SECS = 600
 
 MONGODB_URL = os.getenv('MONGODB_URL')
 SLEEP_TIME = 10

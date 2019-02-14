@@ -59,6 +59,7 @@ type ShortcodeMedia struct {
 	Caption              MediaData `json:"edge_media_to_caption"`
 	TypeName             string    `json:"__typename"`
 	Media                MediaData `json:"edge_sidecar_to_children"`
+	Tagged               MediaData `json:"edge_media_to_tagged_user"`
 	ID                   string    `json:"id"`
 	DisplayURL           string    `json:"display_url"`
 	AccessibilityCaption string    `json:"accessibility_caption"`
@@ -88,10 +89,16 @@ type HasNode struct {
 
 // NodeData holds IgProfile's media data
 type NodeData struct {
-	ID                   string `json:"id"`
-	DisplayURL           string `json:"display_url"`
-	AccessibilityCaption string `json:"accessibility_caption"`
-	Text                 string `json:"text"`
+	ID                   string      `json:"id"`
+	DisplayURL           string      `json:"display_url"`
+	AccessibilityCaption string      `json:"accessibility_caption"`
+	Text                 string      `json:"text"`
+	User                 HasUsername `json:"user"`
+}
+
+// HasUsername node with key username
+type HasUsername struct {
+	Username string `json:"username"`
 }
 
 // HasCount node with key count
@@ -178,6 +185,22 @@ func FetchMediaFromPost(igID string, postID string) ([]*igmedia.IgMedia, string)
 	return retVals, err.Error()
 }
 
+func getIDsFromData(data *IgData) []string {
+	var retVals []string
+	sc := data.EntryData.PostPage[0].Graphql.ShortcodeMedia
+	edges := sc.Caption.Edges
+	for _, edge := range edges {
+		accs := accMatcher.FindAllString(edge.Node.Text, -1)
+		retVals = append(retVals, accs...)
+	}
+	if len(sc.Tagged.Edges) > 0 {
+		for _, edge := range sc.Tagged.Edges {
+			retVals = append(retVals, edge.Node.User.Username)
+		}
+	}
+	return retVals
+}
+
 // FetchAccountFromPost fetch IG IDs from post
 // Returns IG IDs and empty string if success
 // otherwise returns empty array and error message
@@ -195,12 +218,7 @@ func FetchAccountFromPost(postID string) ([]string, string) {
 			utilLogger.Fatal("Failed to get data from response", errors.New(errStr))
 			return retVals, errStr
 		}
-		sc := data.EntryData.PostPage[0].Graphql.ShortcodeMedia
-		edges := sc.Caption.Edges
-		for _, edge := range edges {
-			accs := accMatcher.FindAllString(edge.Node.Text, -1)
-			retVals = append(retVals, accs...)
-		}
+		retVals = getIDsFromData(data)
 		return retVals, ""
 	}
 	return retVals, err.Error()
