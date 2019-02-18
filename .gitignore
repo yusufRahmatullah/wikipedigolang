@@ -6,4 +6,3 @@ phantomjs
 # local development
 *.pyc
 *.sh
-*.js
