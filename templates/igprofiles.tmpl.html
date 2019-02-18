@@ -1,13 +1,11 @@
 <!DOCTYPE html>
 <html>
-    {{template "header.tmpl.html" "Igo Profiles"}}
+    {{template "_head.tmpl.html" "Igo Profiles"}}
 <body onload="reset();">
     <h1 id="subtitle" class="center">IGO Profiles</h1>
     <div class="container">
-        <div class="center">
+        <header class="sticky center">
             <input id="search" placeholder="Search IGO here..." oninput="initSearch();" style="position: absoulte;"/>
-        </div>
-        <div id="sorter">
             <label for="sort-by">Sort By</label>
             <select id="sort-by" onchange="initSearch();">
                 <option value="created_at" selected>Created At</option>
@@ -23,7 +21,7 @@
                 <option value="1">Ascending</option>
                 <option value="-1" selected>Descending</option>
             </select>
-        </div>
+        </header>
         <div id ="card-container" class="row">
         </div>
         <div class="center">
@@ -33,117 +31,8 @@
             <div class="spinner primary"></div>
         </div>
     </div>
-    <script>
-        var offset = 0;
-        var urlLocks = [];
-        
-        window.onscroll = function(ev) {
-            if ((window.innerHeight + window.pageYOffset) >= document.body.offsetHeight) {
-                search();
-            }
-        };
-
-        function initSearch() {
-            offset = 0;
-            document.getElementById('card-container').innerHTML = '';
-            urlLocks.length = 0;  // reset locks
-            search();
-        }
-
-        function search() {
-            var query = document.getElementById('search').value;
-            var sortBy = document.getElementById('sort-by').value;
-            var order = document.getElementById('order-by').value;
-            var url = '/api/igprofiles/search?offset='+offset+'&query='+query+'&sort='+sortBy+'&order='+order;
-            if (urlLocks.includes(url)) {
-                return
-            }
-            urlLocks.push(url);
-            spinner(true);
-            fetch(url, {
-                credentials: 'same-origin'
-            })
-            .then(res => res.json())
-            .then(json => {
-                var currentQuery = document.getElementById('search').value;
-                if (currentQuery !== json.data.query) {
-                    return
-                }
-                spinner(false);
-                if (json.status === 'OK') {
-                    if (offset == 0 && json.data.profiles == null) {
-                        notFound(true);
-                    } else {
-                        notFound(false);
-                        appendCards(json.data.profiles);
-                        offset += json.data.profiles.length;
-                    }
-                    urlLocks.length = 0;
-                } else if (json.status === 'error'){
-                    notFound(true);
-                }
-            })
-        }
-
-        function initCount() {
-            fetch('/api/igprofiles/count')
-            .then(res => res.json())
-            .then(json => {                
-                if (json.status == 'OK') {
-                    document.getElementById('subtitle').innerHTML = 'IGO Profiles <sub>('+json.data+' profiles)</sub>';
-                }
-            });
-        }
-
-        function reset() {
-            initCount();
-            offset = 0;
-            document.getElementById('search').value = '';
-            initSearch();
-        }
-
-        function notFound(v) {
-            var n = document.getElementById('not-found');
-            if (v) {
-                n.style.visibility = 'visible';
-            } else {
-                n.style.visibility = 'hidden';
-            }
-        }
-
-        function spinner(b) {
-            var n = document.querySelector('.spinner');
-            n.style.visibility = b ? 'visible' : 'hidden';
-        }
-
-        function appendCards(cards) {
-            var cc = document.getElementById('card-container');
-            cards.forEach(card => {
-                var col = document.createElement('div');
-                col.setAttribute('class', 'col-sm-4 col-md-3')
-                var c = document.createElement('div');
-                c.setAttribute('class', 'card');
-                var i = document.createElement('img');
-                i.setAttribute('src', card.pp_url);
-                i.setAttribute('style', 'height:100%;');
-                i.setAttribute('onerror', 'if (this.src != "/static/default.png") this.src = "/static/default.png";');
-                var tt = document.createElement('div');
-                tt.setAttribute('class', 'section double-padded center')
-                tt.innerHTML = card.name;
-                var a = document.createElement('a');
-                a.setAttribute('href', 'https://www.instagram.com/'+card.ig_id);
-                a.setAttribute('target', '_blank')
-                var at = document.createElement('div');
-                at.setAttribute('class', 'section dark center')
-                at.innerHTML = '@'+card.ig_id;
-                a.appendChild(at);
-                c.appendChild(i);
-                c.appendChild(tt);
-                c.appendChild(a);
-                col.appendChild(c);
-                cc.appendChild(col);
-            });
-        }
-    </script>
+    <script type="text/javascript" src="/static/js/main.js"></script>
+    <script type="text/javascript" src="/static/js/ig_page.js" page="igprofiles" subtitle="Profiles" search="/search" count="/count"></script>
+    <script type="text/javascript" src="/static/js/igprofile.js"></script>
 </body>
 </html>

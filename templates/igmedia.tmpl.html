@@ -1,13 +1,11 @@
 <!DOCTYPE html>
 <html>
-    {{template "header.tmpl.html" "Igo Medias"}}
+    {{template "_head.tmpl.html" "Igo Medias"}}
 <body onload="reset();">
     <h1 id="subtitle" class="center">IGO Medias</h1>
     <div class="container">
-        <div class="center">
+        <header class="sticky center">
             <input id="search" placeholder="Search IG ID here..." oninput="initSearch();" style="position: absoulte;"/>
-        </div>
-        <div id="sorter">
             <label for="sort-by">Sort By</label>
             <select id="sort-by" onchange="initSearch();">
                 <option value="_id" selected>ID</option>
@@ -20,7 +18,8 @@
                 <option value="1">Ascending</option>
                 <option value="-1" selected>Descending</option>
             </select>
-        </div>
+        </header>
+        
         <div id ="card-container" class="row">
         </div>
         <div class="center">
@@ -30,106 +29,8 @@
             <div class="spinner primary"></div>
         </div>
     </div>
-    <script>
-        var offset = 0;
-        var urlLocks = [];
-        
-        window.onscroll = function(ev) {
-            if ((window.innerHeight + window.pageYOffset) >= document.body.offsetHeight) {
-                search();
-            }
-        };
-
-        function initSearch() {
-            offset = 0;
-            document.getElementById('card-container').innerHTML = '';
-            urlLocks.length = 0;  // reset locks
-            search();
-        }
-
-        function search() {
-            var query = document.getElementById('search').value;
-            var sortBy = document.getElementById('sort-by').value;
-            var order = document.getElementById('order-by').value;
-            var url = '/api/igmedias?offset='+offset+'&ig_id='+query+'&sort='+sortBy+'&order='+order;
-            if (urlLocks.includes(url)) {
-                return
-            }
-            urlLocks.push(url);
-            spinner(true);
-            fetch(url, {
-                credentials: 'same-origin'
-            })
-            .then(res => res.json())
-            .then(json => {
-                var currentQuery = document.getElementById('search').value;
-                if (currentQuery !== json.data.ig_id) {
-                    return
-                }
-                spinner(false);
-                if (json.status === 'OK') {
-                    if (offset == 0 && json.data.medias == null) {
-                        notFound(true);
-                    } else {
-                        notFound(false);
-                        appendCards(json.data.medias);
-                        offset += json.data.medias.length;
-                    }
-                    urlLocks.length = 0;
-                } else if (json.status === 'error'){
-                    notFound(true);
-                }
-            })
-        }
-
-        function initCount() {
-            fetch('/api/igmedias/count')
-            .then(res => res.json())
-            .then(json => {
-                if (json.status == 'OK') {
-                    document.getElementById('subtitle').innerHTML = 'IGO Medias <sub>('+json.data+' medias)</sub>';
-                }
-            })
-        }
-
-        function reset() {
-            initCount();
-            offset = 0;
-            document.getElementById('search').value = '';
-            initSearch();
-        }
-
-        function notFound(v) {
-            var n = document.getElementById('not-found');
-            if (v) {
-                n.style.visibility = 'visible';
-            } else {
-                n.style.visibility = 'hidden';
-            }
-        }
-
-        function spinner(b) {
-            var n = document.querySelector('.spinner');
-            n.style.visibility = b ? 'visible' : 'hidden';
-        }        
-
-        function appendCards(cards) {
-            var cc = document.getElementById('card-container');
-            cards.forEach(card => {                
-                var col = document.createElement('div');
-                col.setAttribute('class', 'col-sm-4 col-md-3')
-                col.innerHTML = `
-                <div class="card">
-                    <img src="`+card.url+`" style="height:100%" onerror='if (this.src != "/static/default.png") this.src = "/static/default.png";'/>
-                    <div class="section dark center">
-                        <a href="https://www.instagram.com/`+card.ig_id+`" target="_blank">
-                            @`+card.ig_id+`
-                        </a>
-                    </div>
-                </div>`;
-                cc.appendChild(col);
-            });
-        }
-    </script>
+    <script type="text/javascript" src="/static/js/main.js"></script>
+    <script type="text/javascript" src="/static/js/ig_page.js" page="igmedias" subtitle="Medias" count="/count"></script>
+    <script type="text/javascript" src="/static/js/igmedia.js"></script>
 </body>
 </html>

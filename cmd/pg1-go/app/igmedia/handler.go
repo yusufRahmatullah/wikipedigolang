@@ -48,14 +48,14 @@ func convertIntOrDefault(text string, def int) int {
 func findIgMediaHandler(c *gin.Context, status MediaStatus) {
 	offsetStr := c.Query("offset")
 	limitStr := c.Query("limit")
-	igID := c.Query("ig_id")
+	igID := c.Query("query")
 	offset := convertIntOrDefault(offsetStr, defaultOffset)
 	limit := convertIntOrDefault(limitStr, defaultLimit)
 	sort := generateSortOrder(c)
 	igms := FindIgMedia(igID, offset, limit, status, sort)
 	compData := struct {
 		Medias []IgMedia `json:"medias"`
-		IGID   string    `json:"ig_id"`
+		IGID   string    `json:"query"`
 	}{
 		Medias: igms,
 		IGID:   igID,
