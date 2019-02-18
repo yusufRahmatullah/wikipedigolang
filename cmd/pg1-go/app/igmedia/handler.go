@@ -3,7 +3,8 @@ package igmedia
 import (
 	"fmt"
 	"net/http"
-	"strconv"
+
+	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/utils"
 
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/base"
 
@@ -11,54 +12,19 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-const (
-	defaultOffset = 0
-	defaultLimit  = 24
-)
-
 var (
 	handlerLogger = logger.NewLogger("IgMediaHandler", false, true)
 )
 
-func generateSortOrder(c *gin.Context) string {
-	sort := c.Query("sort")
-	orderStr := c.Query("order")
-	order := convertIntOrDefault(orderStr, -1)
-	if sort == "" {
-		sort = "_id"
-	}
-	if order == -1 {
-		sort = "-" + sort
-	}
-	return sort
-}
-
-func convertIntOrDefault(text string, def int) int {
-	if text == "" {
-		return def
-	}
-	num, err := strconv.Atoi(text)
-	if err != nil {
-		handlerLogger.Warning(fmt.Sprintf("Failed to convert text to int: %v", text))
-		return def
-	}
-	return num
-}
-
 func findIgMediaHandler(c *gin.Context, status MediaStatus) {
-	offsetStr := c.Query("offset")
-	limitStr := c.Query("limit")
-	igID := c.Query("query")
-	offset := convertIntOrDefault(offsetStr, defaultOffset)
-	limit := convertIntOrDefault(limitStr, defaultLimit)
-	sort := generateSortOrder(c)
-	igms := FindIgMedia(igID, offset, limit, status, sort)
+	fr := utils.GetFindRequest(c)
+	igms := FindIgMedia(fr, status)
 	compData := struct {
 		Medias []IgMedia `json:"medias"`
 		IGID   string    `json:"query"`
 	}{
 		Medias: igms,
-		IGID:   igID,
+		IGID:   fr.Query,
 	}
 	data := base.StandardJSON("", compData)
 	c.JSON(http.StatusOK, data)

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/utils"
+
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/base"
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/logger"
 	"github.com/gin-gonic/gin"
@@ -186,17 +188,14 @@ func SaveOrUpdate(igp *IgProfile) string {
 // GetAll returns All IgProfile in database
 // Require offset and limit number for pagination
 // Require status to define what status of the Profile
-func GetAll(offset, limit int, status ProfileStatus, sortBy ...string) []IgProfile {
+func GetAll(fr *utils.FindRequest, status ProfileStatus) []IgProfile {
 	dataAccess := base.NewDataAccess()
 	defer dataAccess.Close()
 	col := dataAccess.GetCollection(igProfileCol)
 	var igps []IgProfile
-	if len(sortBy) == 0 {
-		sortBy = []string{"_id"}
-	}
 	err := col.Find(bson.M{
 		"status": bson.M{"$regex": status, "$options": "i"},
-	}).Sort(sortBy...).Skip(offset).Limit(limit).All(&igps)
+	}).Sort(fr.Sort).Skip(fr.Offset).Limit(fr.Limit).All(&igps)
 	if err == nil {
 		modelLogger.Debug("Success to get all IgProfile")
 	} else {
@@ -230,25 +229,22 @@ func GetIgProfile(igID string) *IgProfile {
 // FindIgProfile find IgProfiles in database by its IGID or name
 // Require offset and limit number for pagination
 // Require status to define
-func FindIgProfile(query string, offset, limit int, status ProfileStatus, sortBy ...string) []IgProfile {
+func FindIgProfile(fr *utils.FindRequest, status ProfileStatus) []IgProfile {
 	dataAccess := base.NewDataAccess()
 	defer dataAccess.Close()
 	col := dataAccess.GetCollection(igProfileCol)
 	var igps []IgProfile
-	if len(sortBy) == 0 {
-		sortBy = []string{"-modified_at"}
-	}
 	err := col.Find(bson.M{
 		"$or": []bson.M{
-			bson.M{"ig_id": bson.M{"$regex": query, "$options": "i"}},
-			bson.M{"name": bson.M{"$regex": query, "$options": "i"}},
+			bson.M{"ig_id": bson.M{"$regex": fr.Query, "$options": "i"}},
+			bson.M{"name": bson.M{"$regex": fr.Query, "$options": "i"}},
 		},
 		"status": bson.M{"$regex": status, "$options": "i"},
-	}).Sort(sortBy...).Skip(offset).Limit(limit).All(&igps)
+	}).Sort(fr.Sort).Skip(fr.Offset).Limit(fr.Limit).All(&igps)
 	if err == nil {
-		modelLogger.Debug(fmt.Sprintf("Success to find IgProfile with query: %v", query))
+		modelLogger.Debug(fmt.Sprintf("Success to find IgProfile with query: %v", fr.Query))
 	} else {
-		modelLogger.Fatal(fmt.Sprintf("Failed to find IgProfile with query: %v", query), err)
+		modelLogger.Fatal(fmt.Sprintf("Failed to find IgProfile with query: %v", fr.Query), err)
 	}
 	return igps
 }

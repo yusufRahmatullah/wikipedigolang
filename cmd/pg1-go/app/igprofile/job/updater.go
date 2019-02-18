@@ -3,6 +3,8 @@ package job
 import (
 	"fmt"
 
+	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/utils"
+
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/igprofile"
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/jobqueue"
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/logger"
@@ -59,7 +61,10 @@ func (job *UpdaterJob) Process(jq *jobqueue.JobQueue) string {
 	var igps []igprofile.IgProfile
 	offset := 0
 	limit := 10
-	igps = igprofile.GetAll(offset, limit, igprofile.StatusAll)
+	fr := utils.FindRequest{
+		Offset: 0, Limit: 10,
+	}
+	igps = igprofile.GetAll(&fr, igprofile.StatusAll)
 	for len(igps) > 0 {
 		ujLogger.Debug(fmt.Sprintf("offset: %v, limit: %v, len(igps): %v", offset, limit, len(igps)))
 		for i, igp := range igps {
@@ -68,8 +73,8 @@ func (job *UpdaterJob) Process(jq *jobqueue.JobQueue) string {
 		}
 		// update igps and offset
 		if len(igps) == limit {
-			offset += limit
-			igps = igprofile.GetAll(offset, limit, igprofile.StatusActive)
+			fr.Offset += limit
+			igps = igprofile.GetAll(&fr, igprofile.StatusActive)
 		} else {
 			break
 		}

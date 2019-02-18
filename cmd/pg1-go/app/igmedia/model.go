@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/utils"
+
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/base"
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/logger"
 	"github.com/globalsign/mgo/bson"
@@ -68,20 +70,17 @@ func Save(igm *IgMedia) bool {
 // FindIgMedia find IgMedia in database by IG ID
 // Require offset and limit number for pagination
 // Require status to define
-func FindIgMedia(igID string, offset, limit int, status MediaStatus, sortBy ...string) []IgMedia {
+func FindIgMedia(fr *utils.FindRequest, status MediaStatus) []IgMedia {
 	dataAccess := base.NewDataAccess()
 	defer dataAccess.Close()
 	col := dataAccess.GetCollection(igMediaCol)
 	var igms []IgMedia
-	if len(sortBy) == 0 {
-		sortBy = []string{"-_id"}
-	}
 	err := col.Find(bson.M{
-		"ig_id":  bson.M{"$regex": igID, "$options": "i"},
+		"ig_id":  bson.M{"$regex": fr.Query, "$options": "i"},
 		"status": bson.M{"$regex": status, "$options": "i"},
-	}).Sort(sortBy...).Skip(offset).Limit(limit).All(&igms)
+	}).Sort(fr.Sort).Skip(fr.Offset).Limit(fr.Limit).All(&igms)
 	if err != nil {
-		modelLogger.Fatal(fmt.Sprintf("Failed to find IgMedia with igID: %v", igID), err)
+		modelLogger.Fatal(fmt.Sprintf("Failed to find IgMedia with igID: %v", fr.Query), err)
 	}
 	return igms
 }

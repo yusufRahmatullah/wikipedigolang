@@ -25,7 +25,9 @@ func DefineAPIRoutes(router *gin.RouterGroup) {
 		})
 		reqAdmin.POST("/igprofiles", newIgProfileHandler)
 		reqAdmin.PATCH("/igprofile/:ig_id", modifyIgProfileHandler)
-		reqAdmin.DELETE("/igprofile/:ig_id", deleteIgProfileHandler)
+		reqAdmin.DELETE("/igprofile/:ig_id", func(c *gin.Context) {
+			deleteIgProfileHandler(c, false)
+		})
 
 		reqAdmin.POST("/igprofiles/action", igProfileActionHandler)
 
@@ -34,7 +36,9 @@ func DefineAPIRoutes(router *gin.RouterGroup) {
 		})
 		reqAdmin.GET("/multi_acc", findMultiAccHandler)
 		reqAdmin.POST("/multi_acc/:ig_id", activateMultiAccHandler)
-		reqAdmin.DELETE("/multi_acc/:ig_id", deleteMultiAccHandler)
+		reqAdmin.DELETE("/multi_acc/:ig_id", func(c *gin.Context) {
+			deleteIgProfileHandler(c, true)
+		})
 	}
 }
 
