@@ -53,7 +53,7 @@ func updateIgID(igp *igprofile.IgProfile) {
 }
 
 // Process executes job queue with the given params
-// Update process is not guaranted to success
+// Update process is not guaranteed to success
 // This method always returns empty string
 func (job *UpdaterJob) Process(jq *jobqueue.JobQueue) string {
 	ujLogger.Debug("run process")

@@ -92,8 +92,7 @@ func errToDB(level, name, message string, err error) {
 	if err != nil {
 		cause = err.Error()
 	}
-		
-	
+
 	ierr := col.Insert(&dbLogs{
 		CreatedAt: time.Now(),
 		Name:      name,

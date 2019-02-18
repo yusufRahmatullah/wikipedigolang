@@ -85,7 +85,7 @@ func (ja *JobAssigner) Register(proc Job) {
 
 // ProcessJobQueue process JobQueue by assign it into
 // corresponding registered Processor
-// Returns true if JobQueue processed succesfully
+// Returns true if JobQueue processed successfully
 func (ja *JobAssigner) ProcessJobQueue(jobQueue *JobQueue) bool {
 	name := jobQueue.Name
 	params := jobQueue.Params
