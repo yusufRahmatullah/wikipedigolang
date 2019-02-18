@@ -39,13 +39,17 @@ func DefineAPIRoutes(router *gin.RouterGroup) {
 // DefineViewRoutes defines routes for IgMedia that contains view
 func DefineViewRoutes(router *gin.Engine) {
 	router.GET("/igmedias", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "igmedia.tmpl.html", nil)
+		c.HTML(http.StatusOK, "igmedia.tmpl.html", gin.H{
+			"admin": false,
+		})
 	})
 	adminPage := router.Group("/admin")
 	adminPage.Use(auth.RequiredAdmin())
 	{
 		adminPage.GET("/igmedias", func(c *gin.Context) {
-			c.HTML(http.StatusOK, "admin_igmedia.tmpl.html", nil)
+			c.HTML(http.StatusOK, "igmedia.tmpl.html", gin.H{
+				"admin": true,
+			})
 		})
 	}
 }

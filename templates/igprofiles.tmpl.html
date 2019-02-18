@@ -21,6 +21,15 @@
                 <option value="1">Ascending</option>
                 <option value="-1" selected>Descending</option>
             </select>
+            {{if .admin}}
+            <label for="filter-status">Status</label>
+            <select id="filter-status" onchange="initSearch();">
+                <option value="" selected>All</option>
+                <option value="active">Active</option>
+                <option value="banned">Banned</option>
+                <option value="multi">Multi</option>
+            </select>
+            {{end}}
         </header>
         <div id ="card-container" class="row">
         </div>
@@ -32,7 +41,12 @@
         </div>
     </div>
     <script type="text/javascript" src="/static/js/main.js"></script>
+    {{if .admin}}
+    <script type="text/javascript" src="/static/js/ig_page.js" page="igprofiles" subtitle="Profiles" search="/search_all", count="/count_all"></script>
+    <script type="text/javascript" src="/static/js/admin_igprofile.js"></script>
+    {{else}}
     <script type="text/javascript" src="/static/js/ig_page.js" page="igprofiles" subtitle="Profiles" search="/search" count="/count"></script>
     <script type="text/javascript" src="/static/js/igprofile.js"></script>
+    {{end}}
 </body>
 </html>

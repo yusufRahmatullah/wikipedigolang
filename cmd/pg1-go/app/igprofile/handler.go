@@ -265,7 +265,9 @@ func countIgProfileHandler(c *gin.Context, status ProfileStatus) {
 /////////////////////////////////
 
 func igProfilesView(c *gin.Context) {
-	c.HTML(http.StatusOK, "igprofiles.tmpl.html", nil)
+	c.HTML(http.StatusOK, "igprofiles.tmpl.html", gin.H{
+		"admin": false,
+	})
 }
 
 func multiAccView(c *gin.Context) {
@@ -273,5 +275,7 @@ func multiAccView(c *gin.Context) {
 }
 
 func adminIgProfileView(c *gin.Context) {
-	c.HTML(http.StatusOK, "admin_igprofiles.tmpl.html", nil)
+	c.HTML(http.StatusOK, "igprofiles.tmpl.html", gin.H{
+		"admin": true,
+	})
 }
