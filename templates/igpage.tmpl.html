@@ -4,37 +4,7 @@
 <body onload="reset();">
     <h1 id="subtitle" class="center">{{.title}}</h1>
     <div class="container">
-        <header class="sticky center">
-            <input id="search" placeholder="{{.search_ph}}" oninput="initSearch();" style="position: absoulte;"/>
-            <label for="sort-by">Sort By</label>
-            <select id="sort-by" onchange="initSearch();">
-            {{range $i, $d := .sort_criteria}}
-                {{if eq $i 0}}
-                <option value="{{ index $d 0}}" selected>{{ index $d 1 }}</option>
-                {{else}}
-                <option value="{{ index $d 0}}">{{ index $d 1 }}</option>
-                {{end}}
-            {{end}}
-            </select>
-            <label for="order">Order</label>
-            <select id="order-by" onchange="initSearch();">
-                <option value="1">Ascending</option>
-                <option value="-1" selected>Descending</option>
-            </select>
-            {{if .admin}}
-            <label for="filter-status">Status</label>
-            <select id="filter-status" onchange="initSearch();">
-            {{range $i, $d := .filter_criteria}}
-                {{if eq $i 0}}
-                <option value="{{ index $d 0 }}" selected>{{ index $d 1 }}</option>
-                {{else}}
-                <option value="{{ index $d 0 }}">{{ index $d 1 }}</option>
-                {{end}}
-            {{end}}
-            </select>
-            {{end}}
-        </header>
-        
+        {{template "_igpage_header.tmpl.html" .}}
         <div id ="card-container" class="row">
         </div>
         <div class="center">

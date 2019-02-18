@@ -38,6 +38,15 @@ func ginMode() string {
 	return gm
 }
 
+func noCacheHeader() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Writer.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+		c.Writer.Header().Set("Pragma", "no-cache")
+		c.Writer.Header().Set("Expires", "0")
+		c.Next()
+	}
+}
+
 func main() {
 	port := os.Getenv("PORT")
 
@@ -56,6 +65,7 @@ func main() {
 	router := gin.New()
 	router.Use(gin.Logger())
 	router.Use(sessions.Sessions("defaultSession", store))
+	router.Use(noCacheHeader())
 	router.SetFuncMap(template.FuncMap{
 		"decrease": dec,
 		"increase": inc,
