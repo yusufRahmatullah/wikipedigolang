@@ -40,7 +40,9 @@ func DefineAPIRoutes(router *gin.RouterGroup) {
 
 // DefineViewRoutes defines routes for IgProfile that contains view
 func DefineViewRoutes(router *gin.Engine, prefix string) {
-	router.GET(prefix+"/", igProfilesView)
+	router.GET(prefix+"/", func(c *gin.Context) {
+		igProfilesView(c, false)
+	})
 	router.GET(prefix+"/igprofiles", func(c *gin.Context) {
 		c.Redirect(http.StatusPermanentRedirect, "/")
 	})
@@ -54,6 +56,8 @@ func DefineViewRoutes(router *gin.Engine, prefix string) {
 	adminPage := router.Group("/admin")
 	adminPage.Use(auth.RequiredAdmin())
 	{
-		adminPage.GET("/igprofiles", adminIgProfileView)
+		adminPage.GET("/igprofiles", func(c *gin.Context) {
+			igProfilesView(c, true)
+		})
 	}
 }

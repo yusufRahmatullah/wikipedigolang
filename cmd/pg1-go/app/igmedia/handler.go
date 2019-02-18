@@ -104,3 +104,31 @@ func countIgMediaHandler(c *gin.Context, status MediaStatus) {
 		c.JSON(http.StatusInternalServerError, data)
 	}
 }
+
+func igMediasView(c *gin.Context, admin bool) {
+	c.HTML(http.StatusOK, "igpage.tmpl.html", gin.H{
+		"admin":     admin,
+		"title":     "IGO Medias",
+		"search_ph": "Search IG ID here...",
+		"sort_criteria": [][]string{
+			[]string{"_id", "ID"},
+			[]string{"ig_id", "IG ID"},
+			[]string{"created_at", "Created At"},
+			[]string{"modified_at", "Modified At"},
+		},
+		"filter_criteria": [][]string{
+			[]string{"", "All"},
+			[]string{"shown", "Shown"},
+			[]string{"hidden", "Hidden"},
+		},
+		"script": gin.H{
+			"name":         "igmedia",
+			"page":         "igmedias",
+			"subtitle":     "Medias",
+			"search":       "",
+			"count":        "/count",
+			"admin_search": "/all",
+			"admin_count":  "/count_all",
+		},
+	})
+}

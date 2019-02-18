@@ -264,18 +264,38 @@ func countIgProfileHandler(c *gin.Context, status ProfileStatus) {
 // IgProfile Views
 /////////////////////////////////
 
-func igProfilesView(c *gin.Context) {
-	c.HTML(http.StatusOK, "igprofiles.tmpl.html", gin.H{
-		"admin": false,
+func igProfilesView(c *gin.Context, admin bool) {
+	c.HTML(http.StatusOK, "igpage.tmpl.html", gin.H{
+		"admin":     admin,
+		"title":     "IGO Profile",
+		"search_ph": "Search IGO here...",
+		"sort_criteria": [][]string{
+			[]string{"created_at", "Created At"},
+			[]string{"modified_at", "Modified At"},
+			[]string{"ig_id", "IG ID"},
+			[]string{"name", "Name"},
+			[]string{"followers", "Followers"},
+			[]string{"following", "Following"},
+			[]string{"posts", "Post Number"},
+		},
+		"filter_criteria": [][]string{
+			[]string{"", "All"},
+			[]string{"active", "Active"},
+			[]string{"banned", "Banned"},
+			[]string{"multi", "Multi"},
+		},
+		"script": gin.H{
+			"name":         "igprofile",
+			"page":         "igprofiles",
+			"subtitle":     "Profiles",
+			"search":       "/search",
+			"count":        "/count",
+			"admin_search": "/search_all",
+			"admin_count":  "/count_all",
+		},
 	})
 }
 
 func multiAccView(c *gin.Context) {
 	c.HTML(http.StatusOK, "multi_acc.tmpl.html", nil)
-}
-
-func adminIgProfileView(c *gin.Context) {
-	c.HTML(http.StatusOK, "igprofiles.tmpl.html", gin.H{
-		"admin": true,
-	})
 }

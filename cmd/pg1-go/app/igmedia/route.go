@@ -1,8 +1,6 @@
 package igmedia
 
 import (
-	"net/http"
-
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/auth"
 	"github.com/gin-gonic/gin"
 )
@@ -39,17 +37,14 @@ func DefineAPIRoutes(router *gin.RouterGroup) {
 // DefineViewRoutes defines routes for IgMedia that contains view
 func DefineViewRoutes(router *gin.Engine) {
 	router.GET("/igmedias", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "igmedia.tmpl.html", gin.H{
-			"admin": false,
-		})
+		igMediasView(c, false)
+
 	})
 	adminPage := router.Group("/admin")
 	adminPage.Use(auth.RequiredAdmin())
 	{
 		adminPage.GET("/igmedias", func(c *gin.Context) {
-			c.HTML(http.StatusOK, "igmedia.tmpl.html", gin.H{
-				"admin": true,
-			})
+			igMediasView(c, true)
 		})
 	}
 }

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+    {{template "_head.tmpl.html" .title}}
+<body onload="reset();">
+    <h1 id="subtitle" class="center">{{.title}}</h1>
+    <div class="container">
+        <header class="sticky center">
+            <input id="search" placeholder="{{.search_ph}}" oninput="initSearch();" style="position: absoulte;"/>
+            <label for="sort-by">Sort By</label>
+            <select id="sort-by" onchange="initSearch();">
+            {{range $i, $d := .sort_criteria}}
+                {{if eq $i 0}}
+                <option value="{{ index $d 0}}" selected>{{ index $d 1 }}</option>
+                {{else}}
+                <option value="{{ index $d 0}}">{{ index $d 1 }}</option>
+                {{end}}
+            {{end}}
+            </select>
+            <label for="order">Order</label>
+            <select id="order-by" onchange="initSearch();">
+                <option value="1">Ascending</option>
+                <option value="-1" selected>Descending</option>
+            </select>
+            {{if .admin}}
+            <label for="filter-status">Status</label>
+            <select id="filter-status" onchange="initSearch();">
+            {{range $i, $d := .filter_criteria}}
+                {{if eq $i 0}}
+                <option value="{{ index $d 0 }}" selected>{{ index $d 1 }}</option>
+                {{else}}
+                <option value="{{ index $d 0 }}">{{ index $d 1 }}</option>
+                {{end}}
+            {{end}}
+            </select>
+            {{end}}
+        </header>
+        
+        <div id ="card-container" class="row">
+        </div>
+        <div class="center">
+            <div id="not-found" class="card warning double-padded" style="margin: 0 auto; visibility: hidden;">Ig Profiles not found</div>
+        </div>
+        <div class="center">
+            <div class="spinner primary"></div>
+        </div>
+    </div>
+    <script type="text/javascript" src="/static/js/main.js"></script>
+    {{if .admin}}
+    <script type="text/javascript" src="/static/js/ig_page.js" page="{{.script.page}}" subtitle="{{.script.subtitle}}" search="{{.script.admin_search}}" count="{{.script.admin_count}}"></script>
+    <script type="text/javascript" src="/static/js/admin_{{.script.name}}.js"></script>
+    {{else}}
+    <script type="text/javascript" src="/static/js/ig_page.js" page="{{.script.page}}" subtitle="{{.script.subtitle}}" search="{{.script.search}}" count="{{.script.count}}"></script>
+    <script type="text/javascript" src="/static/js/{{.script.name}}.js"></script>
+    {{end}}
+</body>
+</html>
