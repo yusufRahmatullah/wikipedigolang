@@ -1,6 +1,7 @@
 var offset = 0;
 var urlLocks = [];
 var cs = document.currentScript;
+var timeout = null;
 
 window.onscroll = function(ev) {
     if ((window.innerHeight + window.pageYOffset) >= document.body.offsetHeight) {
@@ -12,7 +13,8 @@ function initSearch() {
     offset = 0;
     qs('#card-container').innerHTML = '';
     urlLocks.length = 0;  // reset locks
-    search();
+    clearTimeout(timeout);
+    timeout = setTimeout(search, 300);
 }
 
 function getScriptAttr(attr) {
