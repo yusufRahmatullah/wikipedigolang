@@ -22,3 +22,35 @@ func NewMongoClient() *MongoClient {
 	}
 	return &MongoClient{Session: sess}
 }
+
+// Collection returns Collection instance to interact with database
+func (mc *MongoClient) Collection(name string) *mgo.Collection {
+	return mc.Session.DB("").C(name)
+}
+
+// Prepare preparing MongoClient before can be used
+func (mc *MongoClient) Prepare() error {
+	var err error
+	err = mc.prepareIgProfileIndex()
+	if err != nil {
+		return err
+	}
+	return err
+}
+
+// Close end the MongoClient connection
+func (mc *MongoClient) Close() {
+	mc.Session.Close()
+}
+
+func (mc *MongoClient) prepareIgProfileIndex() error {
+	col := mc.Collection(IgProfileCollection)
+	idIndex := mgo.Index{
+		Key:        []string{"ig_id"},
+		Unique:     true,
+		DropDups:   true,
+		Background: true,
+		Sparse:     true,
+	}
+	return col.EnsureIndex(idIndex)
+}
