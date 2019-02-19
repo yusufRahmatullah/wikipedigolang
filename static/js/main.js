@@ -54,8 +54,5 @@ function apiPost(url, data, {onSuc, onErr, before, after}) {
 }
 
 qs = q => {
-    if (q[0] == '.') {
-        return document.getElementsByClassName(q.slice(1))[0];
-    }
     return document.querySelector(q);
 }

@@ -64,7 +64,7 @@ type IgProfile struct {
 	Following  int           `json:"following" bson:"following"`
 	Posts      int           `json:"posts" bson:"posts"`
 	PpURL      string        `json:"pp_url" bson:"pp_url"`
-	Status     ProfileStatus `josn:"status" bson:"status"`
+	Status     ProfileStatus `json:"status" bson:"status"`
 }
 
 func (model *IgProfile) initTime() {

@@ -30,7 +30,7 @@ func (job *SingleAccountJob) Name() string {
 func crawlIgID(igID string) string {
 	igp := igprofile.FetchIgProfile(igID)
 	success := ""
-	if igp != nil {
+	if igp != nil && igp.Posts > 0 {
 		success = igprofile.SaveOrUpdate(igp)
 		if success == "" {
 			igp = igprofile.GetIgProfile(igID)
