@@ -1,5 +1,5 @@
 <header class="sticky center">
-    <input id="search" placeholder="{{.search_ph}}" oninput="initSearch();" style="position: absoulte;"/>
+    <input id="search" placeholder="{{.search_ph}}" onkeyup="initSearch();" style="position: absoulte;"/>
     <label for="sort-by">Sort By</label>
     <select id="sort-by" onchange="initSearch();">
     {{range $i, $d := .sort_criteria}}
