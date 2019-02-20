@@ -21,11 +21,6 @@ type MongoIgProfileRepository struct {
 	DB *database.MongoClient
 }
 
-// NewMongoIgProfileRepository instantiate MongoIgProfileRepository with given MongoClient
-func NewMongoIgProfileRepository(db *database.MongoClient) *MongoIgProfileRepository {
-	return &MongoIgProfileRepository{DB: db}
-}
-
 // Create store igProfile to database
 func (rep *MongoIgProfileRepository) Create(igProfile *model.IgProfile) error {
 	col := rep.DB.Collection(database.IgProfileCollection)

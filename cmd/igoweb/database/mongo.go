@@ -32,6 +32,7 @@ func (mc *MongoClient) Collection(name string) *mgo.Collection {
 func (mc *MongoClient) Prepare() error {
 	var err error
 	err = mc.prepareIgProfileIndex()
+	err = mc.prepareLogIndex()
 	if err != nil {
 		return err
 	}
@@ -53,4 +54,13 @@ func (mc *MongoClient) prepareIgProfileIndex() error {
 		Sparse:     true,
 	}
 	return col.EnsureIndex(idIndex)
+}
+
+func (mc *MongoClient) prepareLogIndex() error {
+	col := mc.Collection(LogCollection)
+	index := mgo.Index{
+		Key:        []string{"name", "level"},
+		Background: true,
+	}
+	return col.EnsureIndex(index)
 }
