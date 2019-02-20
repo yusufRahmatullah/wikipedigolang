@@ -2,6 +2,7 @@ var offset = 0;
 var urlLocks = [];
 var cs = document.currentScript;
 var timeout = null;
+var optSearchParam = "";
 
 window.onscroll = function(ev) {
     if ((window.innerHeight + window.pageYOffset) >= document.body.offsetHeight) {
@@ -27,7 +28,7 @@ function search() {
     var order = qs('#order-by').value;
     var srchUrl = getScriptAttr('search');
     var pageCode = getScriptAttr('page');
-    var url = '/api/'+pageCode+srchUrl+'?offset='+offset+'&query='+query+'&sort='+sortBy+'&order='+order;
+    var url = '/api/'+pageCode+srchUrl+'?offset='+offset+'&query='+query+'&sort='+sortBy+'&order='+order+optSearchParam;
     if (urlLocks.includes(url)) {
         return
     }

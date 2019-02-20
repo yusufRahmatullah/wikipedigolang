@@ -17,7 +17,7 @@
     </select>
     {{if .admin}}
     <label for="filter-status">Status</label>
-    <select id="filter-status" onchange="initSearch();">
+    <select id="filter-status" onchange="initFilterSearch();">
     {{range $i, $d := .filter_criteria}}
         {{if eq $i 0}}
         <option value="{{ index $d 0 }}" selected>{{ index $d 1 }}</option>
