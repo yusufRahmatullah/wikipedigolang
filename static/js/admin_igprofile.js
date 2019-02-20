@@ -1,12 +1,13 @@
 function doAction(btn, action) {
     var igid = btn.getAttribute('data-igId');
+    var id = btn.getAttribute('data-id');
     var data = {
         ig_id: igid,
         action: action,
     };
     apiPost('/api/igprofiles/action', data, {
         onSuc: d => {
-            toggleAction(igid, action);
+            toggleAction(igid, id, action);
         },
         onErr: e => {
             alert(e);
@@ -14,22 +15,22 @@ function doAction(btn, action) {
     });
 }
 
-function toggleAction(nid, act) {
+function toggleAction(igid, id, act) {
     // set buttons
-    var bg = qs('#btnGroup-'+nid);
+    var bg = qs('#btnGroup-'+id);
     var status = 'active';
     if (act == 'ban') {
         status = 'banned';
     } else if (act == 'asMulti') {
         status = 'multi';
     }
-    bg.innerHTML = generateButtonsText(status, nid);
+    bg.innerHTML = generateButtonsText(status, igid, id);
     // set status section
-    var ss = qs('#status-'+nid);
+    var ss = qs('#status-'+id);
     ss.innerHTML = status;
 }
 
-function generateButtonsText(status, igid) {
+function generateButtonsText(status, igid, id) {
     var actDis = '';
     var actCls = 'primary';
     var banDis = '';
@@ -50,9 +51,9 @@ function generateButtonsText(status, igid) {
         banDis = 'disabled';
     }
     return `
-        <button class="`+actCls+`" data-igId="`+igid+`" onclick="doAction(this, 'activate');" `+actDis+`>Activate</button>
-        <button class="`+banCls+`" data-igId="`+igid+`" onclick="doAction(this, 'ban');" `+banDis+`>Ban</button>
-        <button class="`+asMultiCls+`" data-igId="`+igid+`" onclick="doAction(this, 'asMulti'); `+asMultiDis+`">As Multi</button>`
+        <button class="`+actCls+`" data-id="`+id+`" data-igId="`+igid+`" onclick="doAction(this, 'activate');" `+actDis+`>Activate</button>
+        <button class="`+banCls+`" data-id="`+id+`" data-igId="`+igid+`" onclick="doAction(this, 'ban');" `+banDis+`>Ban</button>
+        <button class="`+asMultiCls+`" data-id="`+id+`" data-igId="`+igid+`" onclick="doAction(this, 'asMulti'); `+asMultiDis+`">As Multi</button>`
 }
 
 function appendCards(cards) {
@@ -70,10 +71,10 @@ function appendCards(cards) {
                 </a>
             </div>
             <div class="section center">
-                Status: <span id="status-`+card.ig_id+`">`+card.Status+`</span>
+                Status: <span id="status-`+card.id+`">`+card.status+`</span>
             </div>
-            <div class="section button-group" id="btnGroup-`+card.ig_id+`">
-                `+generateButtonsText(card.Status, card.ig_id)+`
+            <div class="section button-group" id="btnGroup-`+card.id+`">
+                `+generateButtonsText(card.status, card.ig_id, card.id)+`
             </div>
         </div>`;
         cc.appendChild(col);
