@@ -6,6 +6,7 @@ import (
 
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/igmedia"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/contrib/sessions"
 
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/auth"
@@ -66,6 +67,11 @@ func main() {
 	router.Use(gin.Logger())
 	router.Use(sessions.Sessions("defaultSession", store))
 	router.Use(noCacheHeader())
+	router.Use(cors.New(cors.Config{
+		AllowOrigins: []string{"http://yusufRahmatullah.github.io", "https://yusufRahmatullah.github.io"},
+		AllowMethods: []string{"GET"},
+	}))
+
 	router.SetFuncMap(template.FuncMap{
 		"decrease": dec,
 		"increase": inc,
