@@ -3,6 +3,7 @@ package main
 import (
 	"html/template"
 	"os"
+	"strings"
 
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/igmedia"
 
@@ -55,6 +56,9 @@ func main() {
 		mainLogger.Error("$PORT must be set", nil)
 	}
 
+	corsEnv := os.Getenv("CORS")
+	corsSites := strings.Split(corsEnv, ",")
+
 	sessionSecret := os.Getenv("SESSION_SECRET")
 	if sessionSecret == "" {
 		mainLogger.Warning("$SESSION_SECRET must be set, set as default")
@@ -68,7 +72,7 @@ func main() {
 	router.Use(sessions.Sessions("defaultSession", store))
 	router.Use(noCacheHeader())
 	router.Use(cors.New(cors.Config{
-		AllowOrigins: []string{"http://yusufRahmatullah.github.io", "https://yusufRahmatullah.github.io"},
+		AllowOrigins: corsSites,
 		AllowMethods: []string{"GET"},
 	}))
 
