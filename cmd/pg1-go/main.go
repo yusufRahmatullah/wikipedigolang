@@ -7,8 +7,8 @@ import (
 
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/igmedia"
 
-	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/contrib/sessions"
+	cors "github.com/rs/cors/wrapper/gin"
 
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/auth"
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/logger"
@@ -58,6 +58,10 @@ func main() {
 
 	corsEnv := os.Getenv("CORS")
 	corsSites := strings.Split(corsEnv, ",")
+	corsDebug := false
+	if ginMode() == "debug" {
+		corsDebug = true
+	}
 
 	sessionSecret := os.Getenv("SESSION_SECRET")
 	if sessionSecret == "" {
@@ -71,9 +75,10 @@ func main() {
 	router.Use(gin.Logger())
 	router.Use(sessions.Sessions("defaultSession", store))
 	router.Use(noCacheHeader())
-	router.Use(cors.New(cors.Config{
-		AllowOrigins: corsSites,
-		AllowMethods: []string{"GET"},
+	router.Use(cors.New(cors.Options{
+		AllowedOrigins: corsSites,
+		AllowedMethods: []string{"GET"},
+		Debug:          corsDebug,
 	}))
 
 	router.SetFuncMap(template.FuncMap{

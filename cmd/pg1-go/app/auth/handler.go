@@ -2,6 +2,7 @@ package auth
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"regexp"
 	"strings"
@@ -62,6 +63,7 @@ func validateLoginData(username, password string) string {
 }
 
 func login(c *gin.Context) {
+	log.Println("==debug== login called")
 	session := sessions.Default(c)
 	loginData := struct {
 		Username string `json:"username"`
@@ -73,13 +75,16 @@ func login(c *gin.Context) {
 	c.BindJSON(&loginData)
 	username := strings.Trim(loginData.Username, " ")
 	password := strings.Trim(loginData.Password, " ")
+	log.Println("==debug== up", username, password)
 	errMsg := validateLoginData(username, password)
+	log.Println("==debug== errMsg", errMsg)
 	if errMsg != "" {
 		data := base.ErrorJSON(errMsg, nil)
 		c.JSON(http.StatusUnauthorized, data)
 		return
 	}
 	user := GetUser(username)
+	log.Println("==debug== user", user)
 	if user == nil {
 		handleLogger.Info(fmt.Sprintf("Failed to find username: %s", username))
 		data := base.ErrorJSON("Invalid Username or Password", nil)
@@ -87,6 +92,7 @@ func login(c *gin.Context) {
 		return
 	}
 	suc := comparePasswords(user.Password, []byte(password))
+	log.Println("==debug== suc", suc)
 	if suc {
 		session.Set("sid", username)
 		err := session.Save()

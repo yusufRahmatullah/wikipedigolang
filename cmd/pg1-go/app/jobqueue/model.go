@@ -156,7 +156,7 @@ func DeleteJobQueue(jobQueue *JobQueue) bool {
 		modelLogger.Info(fmt.Sprintf("Success to delete JobQueue with name: %v", jobQueue.Name))
 		return true
 	}
-	modelLogger.Info(fmt.Sprintf("Failed to delete JobQueue with name: %v", jobQueue.Name))
+	modelLogger.Fatal(fmt.Sprintf("Failed to delete JobQueue with name: %v", jobQueue.Name), err)
 	return false
 }
 
