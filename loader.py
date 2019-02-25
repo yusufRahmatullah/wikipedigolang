@@ -232,7 +232,13 @@ def consume_jobs():
             time.sleep(SLEEP_TIME)
         else:
             for jq in jqs:
-                process_job(jq)
+                try:
+                    process_job(jq)
+                except Exception as e:
+                    print(
+                        'WARNING - Error occurred on JobQueue:', jq,
+                        'caused by:', e
+                    )
 
 
 def main():
