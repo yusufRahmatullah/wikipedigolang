@@ -192,18 +192,25 @@ func igProfileActionHandler(c *gin.Context) {
 	if jd.IGID == "" {
 		data := base.ErrorJSON("Param ig_id can't be empty", nil)
 		c.JSON(http.StatusBadRequest, data)
+		return
 	}
-	status := getStatusFromAction(jd.Action)
-	suc := Update(jd.IGID, bson.M{"status": status})
-	if suc == "" {
-		data := base.StandardJSON(fmt.Sprintf("Success to %v IG ID: %v", jd.Action, jd.IGID), nil)
-		jq := jobqueue.NewJobQueue("UpdateIgMediaStatusJob", map[string]interface{}{"ig_id": jd.IGID})
-		jobqueue.Save(jq)
-		c.JSON(http.StatusOK, data)
+	jobName := ""
+	if jd.Action == "update" {
+		jobName = "SingleUpdaterJob"
 	} else {
-		data := base.ErrorJSON(fmt.Sprintf("Failed to %v IG ID: %v", jd.Action, jd.IGID), nil)
-		c.JSON(http.StatusBadRequest, data)
+		status := getStatusFromAction(jd.Action)
+		suc := Update(jd.IGID, bson.M{"status": status})
+		if suc != "" {
+			data := base.ErrorJSON(fmt.Sprintf("Failed to %v IG ID: %v", jd.Action, jd.IGID), nil)
+			c.JSON(http.StatusBadRequest, data)
+			return
+		}
+		jobName = "UpdateIgMediaStatusJob"
 	}
+	data := base.StandardJSON(fmt.Sprintf("Success to %v IG ID: %v", jd.Action, jd.IGID), nil)
+	jq := jobqueue.NewJobQueue(jobName, map[string]interface{}{"ig_id": jd.IGID})
+	jobqueue.Save(jq)
+	c.JSON(http.StatusOK, data)
 }
 
 func countIgProfileHandler(c *gin.Context, status ProfileStatus) {
@@ -251,8 +258,4 @@ func igProfilesView(c *gin.Context, admin bool) {
 			"admin_count":  "/count_all",
 		},
 	})
-}
-
-func multiAccView(c *gin.Context) {
-	c.HTML(http.StatusOK, "multi_acc.tmpl.html", nil)
 }

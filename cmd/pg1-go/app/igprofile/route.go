@@ -30,15 +30,6 @@ func DefineAPIRoutes(router *gin.RouterGroup) {
 		})
 
 		reqAdmin.POST("/igprofiles/action", igProfileActionHandler)
-
-		reqAdmin.GET("/multi_acc_count", func(c *gin.Context) {
-			countIgProfileHandler(c, StatusMulti)
-		})
-		reqAdmin.GET("/multi_acc", findMultiAccHandler)
-		reqAdmin.POST("/multi_acc/:ig_id", activateMultiAccHandler)
-		reqAdmin.DELETE("/multi_acc/:ig_id", func(c *gin.Context) {
-			deleteIgProfileHandler(c, true)
-		})
 	}
 }
 
@@ -50,12 +41,6 @@ func DefineViewRoutes(router *gin.Engine, prefix string) {
 	router.GET(prefix+"/igprofiles", func(c *gin.Context) {
 		c.Redirect(http.StatusPermanentRedirect, "/")
 	})
-
-	reqAdmin := router.Group(prefix)
-	reqAdmin.Use(auth.RequiredAdmin())
-	{
-		reqAdmin.GET("/multi_acc", multiAccView)
-	}
 
 	adminPage := router.Group("/admin")
 	adminPage.Use(auth.RequiredAdmin())
