@@ -1,82 +1,65 @@
 <!DOCTYPE html>
 <html>
   {{template "_head.tmpl.html" "Job Queue"}}
-<body onload="loadAvaJobs();">
-    <center>
-        <form method="POST" onsubmit="post(); return false;">
+<body onload="loadAvaJobs(); initSearch();">
+    <h1 id="subtitle" class="center">Job Queue</h1>
+    <div class="container">
+        <form class="center" method="POST" onsubmit="post(); return false;">
             <label for="jobName">Job Name: </label>
-            <select name="jobName" id="jobName" onfocus="hideErrorMessage();">
+            <select name="jobName" id="jobName" onfocus="hideErrorMessage();" onchange="setParamsByJobs();">
             </select>
-            <br />
-            <label for="igId">IG ID: </label>
-            <input type="text" id="igId" name="igId" onfocus="hideErrorMessage();" required>
-            <br/>
+            <div class="input-group">
+                <label class="hidden" id="igIdLabel" for="igId">IG ID: </label>
+                <input class="hidden" type="text" id="igId" name="igId" onfocus="hideErrorMessage();">
+                <label class="hidden" id="postIdLabel" for="postId">Post ID: </label>
+                <input class="hidden" type="text" id="postId" name="postId" onfocus="hideErrorMessage();">
+            </div>
             <input type="submit" value="Post Job">
         </form>
 
         <span id="error_message" class="toast popout">This is a toast message!</span>
-    </center>
-<script>
-    function errorMessage(msg) {
-        var sn = document.querySelector('#error_message');
-        sn.innerHTML = msg;
-        sn.style.opacity = 1;
-        sn.style.visibility = 'visible';
-    }
-
-    function hideErrorMessage() {
-        var sn = document.querySelector('#error_message');
-        sn.style.visibility = 'hidden';
-        sn.style.opacity = 0;
-        sn.innerHTML = '';
-    }
-
-    function loadAvaJobs() {
-        var selectNode = document.querySelector("#jobName");
-        fetch('/api/available_jobs', {
-            method: 'GET',
-            credentials: 'same-origin'
-        }).then(resp => resp.json())
-        .then(json => {
-            var data = json.data;
-            data.forEach(el => {
-                var opt = document.createElement("option");
-                opt.setAttribute("value", el.name);
-                opt.innerHTML = el.name;
-                selectNode.append(opt)
-            });
-        })
-    }
-
-    function post() {
-        var jobNameInput = document.querySelector("#jobName");
-        var jobName = jobNameInput.value;
-        var igIdInput = document.querySelector("#igId");
-        var igId = igIdInput.value;
-        var data = {
-            "name": jobName,
-            "params": {
-                "ig_id": igId,
-            }
-        }
-        fetch('/api/job_queue', {
-            method: "POST",
-            body: JSON.stringify(data),
-            headers: {
-                "Content-Type": "application/json",
-            },
-            credentials: "same-origin"
-        })
-        .then(resp => resp.json())
-        .then(json => {
-            if (json.status == "error") {
-                errorMessage(json.message);
-            }
-        })
-        .finally(() => {
-            igIdInput.value = "";
-        })
-    }
-</script>
+        <div class="center">
+            <input id="search" placeholder="Search params here..." onkeyup="initSearch();" style="position: absoulte;"/>
+            <label for="sort-by">Sort By</label>
+            <select id="sort-by" onchange="initSearch();">
+                <option value="_id" selected>ID</option>
+                <option value="name">Name</option>
+                <option value="status">Status</option>
+                <option value="reason">Reason</option>
+            </select>
+            <label for="order">Order</label>
+            <select id="order-by" onchange="initSearch();">
+                <option value="1">Ascending</option>
+                <option value="-1" selected>Descending</option>
+            </select>
+            <label for="filter-status">Status</label>
+            <select id="filter-status" onchange="initSearch();">
+                <option value="postponed" selected>Postponed</option>
+                <option value="active">Active</option>
+                <option value="finished">Finished</option>
+                <option value="">All</option>
+            </select>
+        </div>
+        <div class="center">
+            <div class="spinner primary"></div>
+        </div>
+        <table>            
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Params</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="job-table-body">
+            </tbody>
+        </table>
+        <div class="center">
+            <div id="not-found" class="card warning double-padded" style="margin: 0 auto; visibility: hidden;">Job Queues not found</div>
+        </div>
+    </div>
+    <script type="text/javascript" src="/static/js/main.js"></script>
+    <script type="text/javascript" src="/static/js/admin_job.js"></script>
 </body>
 </html>

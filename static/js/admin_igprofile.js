@@ -23,6 +23,9 @@ function toggleAction(igid, id, act) {
         status = 'banned';
     } else if (act == 'asMulti') {
         status = 'multi';
+    } else if (act == 'update') {
+        window.location.reload(true);
+        return
     }
     bg.innerHTML = generateButtonsText(status, igid, id);
     // set status section
@@ -37,23 +40,30 @@ function generateButtonsText(status, igid, id) {
     var banCls = 'secondary';
     var asMultiDis = '';
     var asMultiCls = 'tertiary';
+    var updDis = '';
+    var updCls = 'primary';
     if (status == 'active') {
         actCls = 'hidden';
         actDis = 'disabled';
     } else if (status == 'banned') {
         banCls = 'hidden';
         banDis = 'disabled';
+        updCls = 'hidden';
+        updDis = 'disabled';
     } else if (status == 'multi') {
         asMultiCls = 'hidden';
         asMultiDis = 'disabled';
+        updCls = 'tertiary';
     } else if (status == 'banned_multi') {
         banCls = 'hidden';
         banDis = 'disabled';
     }
     return `
+        <button class="`+updCls+` data-id="`+id+`" data-igId="`+igid+`" onclick="doAction(this, 'update');" `+updDis+`>Update</button>
         <button class="`+actCls+`" data-id="`+id+`" data-igId="`+igid+`" onclick="doAction(this, 'activate');" `+actDis+`>Activate</button>
         <button class="`+banCls+`" data-id="`+id+`" data-igId="`+igid+`" onclick="doAction(this, 'ban');" `+banDis+`>Ban</button>
-        <button class="`+asMultiCls+`" data-id="`+id+`" data-igId="`+igid+`" onclick="doAction(this, 'asMulti'); `+asMultiDis+`">As Multi</button>`
+        <button class="`+asMultiCls+`" data-id="`+id+`" data-igId="`+igid+`" onclick="doAction(this, 'asMulti');" `+asMultiDis+`>As Multi</button>
+    `;
 }
 
 function appendCards(cards) {

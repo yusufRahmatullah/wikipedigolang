@@ -27,7 +27,7 @@ func (job *UpdaterJob) Name() string {
 	return "UpdaterJob"
 }
 
-func updateIgID(igp *igprofile.IgProfile) {
+func updateIgID(igp *igprofile.IgProfile) string {
 	igID := igp.IGID
 	igp2 := igprofile.FetchIgProfile(igID)
 	if igp2 != nil {
@@ -37,19 +37,21 @@ func updateIgID(igp *igprofile.IgProfile) {
 			ujLogger.Debug(fmt.Sprintf("Success to update IG ID: %v", igID))
 		} else {
 			ujLogger.Fatal(fmt.Sprintf("Failed to update IG ID: %v", igID), nil)
+			return suc
 		}
 		if igp2.Status == igprofile.StatusActive {
 			jq := jobqueue.NewJobQueue("PostMediaJob", map[string]interface{}{
 				"ig_id": igID,
 			})
-			jobqueue.Save(jq)
+			return jobqueue.Save(jq)
 		} else if igp2.Status == igprofile.StatusMulti {
 			jq := jobqueue.NewJobQueue("PostAccountJob", map[string]interface{}{
 				"ig_id": igID,
 			})
-			jobqueue.Save(jq)
+			return jobqueue.Save(jq)
 		}
 	}
+	return fmt.Sprintf("Failed to fetch IgProfile with IG ID: %v", igp.IGID)
 }
 
 // Process executes job queue with the given params
@@ -80,4 +82,34 @@ func (job *UpdaterJob) Process(jq *jobqueue.JobQueue) string {
 		}
 	}
 	return ""
+}
+
+// SingleUpdaterJob is the job for update single IgProfile
+type SingleUpdaterJob struct{}
+
+// NewSingleUpdaterJob instantiate SingleUpdaterJob instance
+func NewSingleUpdaterJob() *SingleUpdaterJob {
+	return &SingleUpdaterJob{}
+}
+
+// Name returns "SingleUpdaterJob"
+func (job *SingleUpdaterJob) Name() string {
+	return "SingleUpdaterJob"
+}
+
+// Process executes job queue with the given params
+// Update process is not guaranteed to success
+// Returns empty string if success otherwise
+// returns error string
+func (job *SingleUpdaterJob) Process(jq *jobqueue.JobQueue) string {
+	igID, ok := jq.Params["ig_id"]
+	if ok {
+		cleanID := igprofile.CleanIgIDParams(igID.(string))
+		igp := igprofile.GetIgProfile(igID.(string))
+		if igp == nil {
+			return fmt.Sprintf("Failed to get IgProfile with IG ID: %v", cleanID)
+		}
+		return updateIgID(igp)
+	}
+	return "Param ig_id not found"
 }

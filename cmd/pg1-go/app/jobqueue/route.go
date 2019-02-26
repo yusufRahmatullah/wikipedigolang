@@ -12,11 +12,13 @@ func DefineAPIRoutes(router *gin.RouterGroup) {
 	{
 		reqAdmin.GET("/available_jobs", getAvailableJobsHandler)
 		reqAdmin.POST("/batch_add", batchAddHandler)
-		reqAdmin.POST("/job_queue", newJobQueueHandler)
 		reqAdmin.GET("/postponed_jobs/count", countPostponedJobsHandler)
 		reqAdmin.GET("/postponed_jobs", getPostponedJobsHandler)
 		reqAdmin.DELETE("/postponed_jobs/:job_id", deletePostponedHandler)
 		reqAdmin.POST("/requeue_postponed_jobs", requeuePostponedHandler)
+		reqAdmin.GET("/jobs", findJobQueueHandler)
+		reqAdmin.POST("/jobs", newJobQueueHandler)
+		reqAdmin.POST("/jobs/action", actionHandler)
 	}
 }
 
@@ -26,7 +28,7 @@ func DefineViewRoutes(router *gin.Engine, prefix string) {
 	reqAdmin.Use(auth.RequiredAdmin())
 	{
 		reqAdmin.GET("/batch_add", batchAddIndexView)
-		reqAdmin.GET("/job_queue", jobQueueIndexView)
+		reqAdmin.GET("/jobs", jobQueueIndexView)
 		reqAdmin.GET("/postponed_jobs", postponedJobsView)
 	}
 }

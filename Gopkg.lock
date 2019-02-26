@@ -155,6 +155,17 @@
   version = "1.0.1"
 
 [[projects]]
+  digest = "1:03f5e06d5aae81f1df6415c9c0b735891afacb34a6bc65345f0305484ad3d5d9"
+  name = "github.com/rs/cors"
+  packages = [
+    ".",
+    "wrapper/gin",
+  ]
+  pruneopts = "UT"
+  revision = "9a47f48565a795472d43519dd49aac781f3034fb"
+  version = "v1.6.0"
+
+[[projects]]
   digest = "1:4887e9e89c80299aa520d718239809fdd2a47a9aa394909b169959bfbc424ddf"
   name = "github.com/ugorji/go"
   packages = ["codec"]
@@ -175,11 +186,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:8207c052fb873f83c61a5aa16f6add5feb9881eda2112b56f69fd3b9e7f55c3f"
+  digest = "1:7a8067e267a25694dd7bdde6e5016053a3f61bb7141448bf8e0025a84eb7d11c"
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
-  revision = "90b0e4468f9980bf79a2290394adaf7f045c5d24"
+  revision = "a9d3bda3a223baa6bba6ef412cb273f0fd163c05"
 
 [[projects]]
   digest = "1:cbc72c4c4886a918d6ab4b95e347ffe259846260f99ebdd8a198c2331cf2b2e9"
@@ -208,6 +219,7 @@
     "github.com/globalsign/mgo/bson",
     "github.com/heroku/x/hmetrics/onload",
     "github.com/imroc/req",
+    "github.com/rs/cors/wrapper/gin",
     "golang.org/x/crypto/bcrypt",
   ]
   solver-name = "gps-cdcl"

@@ -63,7 +63,7 @@ func Save(igm *IgMedia) bool {
 		modelLogger.Info(fmt.Sprintf("Success to create IgMedia with ID: %v", igm.ID))
 		return true
 	}
-	modelLogger.Info(fmt.Sprintf("Failed to create IgMedia with ID: %v", igm.ID))
+	modelLogger.Fatal(fmt.Sprintf("Failed to create IgMedia with ID: %v", igm.ID), err)
 	return false
 }
 

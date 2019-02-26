@@ -1,11 +1,15 @@
 package jobqueue
 
 import (
+	"fmt"
 	"net/http"
+
+	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/utils"
 
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/base"
 
 	"github.com/gin-gonic/gin"
+	"github.com/globalsign/mgo/bson"
 )
 
 func getAvailableJobsHandler(c *gin.Context) {
@@ -30,7 +34,7 @@ func newJobQueueHandler(c *gin.Context) {
 			msg = "Create JobQueue successful"
 			status = http.StatusCreated
 		} else {
-			msg = "Failed to create JobQueue"
+			msg = suc
 			status = http.StatusOK
 		}
 		data := base.StandardJSON(msg, nil)
@@ -115,6 +119,59 @@ func countPostponedJobsHandler(c *gin.Context) {
 	} else {
 		data := base.ErrorJSON("", err.Error())
 		c.JSON(http.StatusInternalServerError, data)
+	}
+}
+
+func findJobQueueHandler(c *gin.Context) {
+	filterStatus := c.Query("filterStatus")
+	status := StatusActive
+	switch filterStatus {
+	case "postponed":
+		status = StatusPostponed
+	case "finished":
+		status = StatusFinished
+	case "":
+		status = StatusAll
+	}
+	fr := utils.GetFindRequest(c)
+	jqs := FindJobQueue(fr, status)
+	compData := struct {
+		Jobs  []JobQueue `json:"jobs"`
+		Query string     `json:"query"`
+	}{
+		Jobs:  jqs,
+		Query: fr.Query,
+	}
+	data := base.StandardJSON("", compData)
+	c.JSON(http.StatusOK, data)
+}
+
+func actionHandler(c *gin.Context) {
+	jd := struct {
+		JobID  string `json:"job_id"`
+		Action string `json:"action"`
+	}{
+		JobID:  "",
+		Action: "",
+	}
+	c.BindJSON(&jd)
+	if jd.JobID == "" {
+		data := base.ErrorJSON("Param job_id can't be empty", nil)
+		c.JSON(http.StatusBadRequest, data)
+		return
+	}
+	status := StatusActive
+	if jd.Action == "delete" {
+		status = StatusFinished
+	}
+	jq := GetJobQueue(jd.JobID)
+	suc := Update(jq, bson.M{"status": status})
+	if suc {
+		data := base.StandardJSON(fmt.Sprintf("Success to %v Job ID: %v", jd.Action, jd.JobID), nil)
+		c.JSON(http.StatusBadRequest, data)
+	} else {
+		data := base.ErrorJSON(fmt.Sprintf("Failed to %v Job ID: %v", jd.Action, jd.JobID), nil)
+		c.JSON(http.StatusNotModified, data)
 	}
 }
 
