@@ -1,2 +1,2 @@
-web: pg1-go
+web: igoweb
 worker: pg1-go-worker

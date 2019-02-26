@@ -55,7 +55,8 @@ func (rep *MongoIgProfileRepository) Find(findRequest *model.FindRequest, status
 	var igProfiles []*model.IgProfile
 	col := rep.DB.Collection(database.IgProfileCollection)
 	query := generateFindQuery(findRequest, status)
-	err := col.Find(query).All(&igProfiles)
+	q := col.Find(query).Sort(findRequest.Sort).Limit(findRequest.Limit)
+	err := q.Skip(findRequest.Offset).All(&igProfiles)
 	return igProfiles, err
 }
 

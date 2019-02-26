@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 	"sync"
 )
 
@@ -23,6 +24,7 @@ var (
 // Instance is singleton Configuration instance
 // Call GetInstance to get instantiated configuration instance
 type Instance struct {
+	Cors           []string
 	GinMode        string
 	JobLimit       int
 	MongoDBURL     string
@@ -60,6 +62,8 @@ func getEnvInt(key string, def int) int {
 }
 
 func fromEnv() *Instance {
+	cors := getEnv("CORS")
+	corsSites := strings.Split(cors, ",")
 	ginMode := getEnvOrDefault("GIN_MODE", defaultGinMode)
 	mongodbURL := getEnv("MONGODB_URL")
 	sapass := getEnv("SUPER_ADMIN")
@@ -68,6 +72,7 @@ func fromEnv() *Instance {
 	waitTime := getEnvInt("WAIT_TIME", defaultWaitTime)
 	sess := getEnv("SESSION_SECRET")
 	return &Instance{
+		Cors:           corsSites,
 		GinMode:        ginMode,
 		JobLimit:       jobLimit,
 		MongoDBURL:     mongodbURL,
