@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 
+	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/utils"
+
 	"github.com/globalsign/mgo"
 
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/logger"
@@ -26,6 +28,8 @@ const (
 	StatusFinished JobStatus = "finished"
 	// StatusPostponed means JobQueue will be executed later
 	StatusPostponed JobStatus = "postponed"
+	// StatusAll means All JobQueue will be shown
+	StatusAll JobStatus = ""
 )
 
 var (
@@ -113,6 +117,19 @@ func Save(jq *JobQueue) string {
 	}
 	modelLogger.Fatal(fmt.Sprintf("Failed to create JobQueue with name: %v", jq.Name), err)
 	return "Failed to create JobQueue"
+}
+
+// GetJobQueue returns JobQueue in database by its id
+func GetJobQueue(jobID string) *JobQueue {
+	dataAccess := base.NewDataAccess()
+	defer dataAccess.Close()
+	col := dataAccess.GetCollection(jobQueueCol)
+	var jq JobQueue
+	err := col.FindId(bson.ObjectIdHex(jobID)).One(&jq)
+	if err != nil {
+		modelLogger.Fatal(fmt.Sprintf("Failed to get Job Queue with Job ID: %v", jobID), err)
+	}
+	return &jq
 }
 
 // Update modify JobQueue instance in database
@@ -239,4 +256,25 @@ func RequeuePostponed(jq *JobQueue) bool {
 	}
 	modelLogger.Fatal(fmt.Sprintf("Failed to requeue JobQueue with uid: %v", jq.UniqueID), err)
 	return false
+}
+
+// FindJobQueue find JobQueue in database by params.ig_id
+// Require offset and limit number for pagination
+// Require status to define
+func FindJobQueue(fr *utils.FindRequest, status JobStatus) []JobQueue {
+	dataAccess := base.NewDataAccess()
+	defer dataAccess.Close()
+	col := dataAccess.GetCollection(jobQueueCol)
+	var jqs []JobQueue
+	err := col.Find(bson.M{
+		"params.ig_id": bson.M{"$regex": fr.Query, "$options": "i"},
+		"status":       bson.M{"$regex": status, "$options": "i"},
+		"name":         bson.M{"$nin": []interface{}{"PostMediaJob", "PostAccountJob"}},
+	}).Sort(fr.Sort).Skip(fr.Offset).Limit(fr.Limit).All(&jqs)
+	if err == nil {
+		modelLogger.Info(fmt.Sprintf("Success to find JobQueue with query: %v", fr.Query))
+	} else {
+		modelLogger.Fatal(fmt.Sprintf("Failed to find JobQueue with query: %v", fr.Query), err)
+	}
+	return jqs
 }

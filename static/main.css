@@ -38,6 +38,10 @@
   max-width: 100%;
 }
 
+.capitalize::first-letter {
+  text-transform: uppercase;
+}
+
 .center {
   text-align: center;
 }
