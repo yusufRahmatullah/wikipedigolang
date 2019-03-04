@@ -22,6 +22,8 @@ type JobStatus string
 
 const (
 	jobQueueCol = "job_queue"
+	// LowestPriority is the lowest Job priority
+	LowestPriority = 1000
 	// StatusActive means JobQueue will be executed
 	StatusActive JobStatus = "active"
 	// StatusFinished means JobQueue has been executed
@@ -34,9 +36,42 @@ const (
 
 var (
 	// JobLimit is maximum Job to be processed and queried
-	JobLimit    int
+	JobLimit int
+	// JobRank is a mapping of JobName an its priority rank
+	JobRank     = make(map[string]int)
 	modelLogger = logger.NewLogger("JobQueue", true, true)
 )
+
+// InitJobRank initialize JobRank mappings
+func InitJobRank() {
+	jobRankStr := os.Getenv("JOB_RANK")
+	if jobRankStr == "" {
+		modelLogger.Warning("$JOB_RANK not found, all Jobs have same priorities")
+		return
+	}
+	jobNames := strings.Split(jobRankStr, ";")
+	for index, jobName := range jobNames {
+		priority := index + 1
+		JobRank[jobName] = priority
+	}
+}
+
+// MigrateJobRank do a migration based on JobRank mappings
+func MigrateJobRank() {
+	dataAccess := base.NewDataAccess()
+	defer dataAccess.Close()
+	col := dataAccess.GetCollection(jobQueueCol)
+	for name, val := range JobRank {
+		ci, err := col.UpdateAll(
+			bson.M{"name": name, "status": bson.M{"$ne": "finished"}},
+			bson.M{"$set": bson.M{"priority": val}},
+		)
+		modelLogger.Debug(fmt.Sprintf("==debug== %v\n", ci))
+		if err != nil {
+			modelLogger.Fatal("Failed to migrate JobRank", err)
+		}
+	}
+}
 
 func init() {
 	var err error
@@ -71,6 +106,7 @@ type JobQueue struct {
 	UniqueID string                 `json:"unique_id" bson:"unique_id"`
 	Status   JobStatus              `json:"status" bson:"status"`
 	Reason   string                 `json:"reason" bson:"reason"`
+	Priority int                    `json:"priority" bson:"priority"`
 }
 
 func sortedKeys(params map[string]interface{}) []string {
@@ -99,7 +135,16 @@ func (jq *JobQueue) GenerateUniqueID() {
 
 // NewJobQueue return new JobQueue instance
 func NewJobQueue(name string, params map[string]interface{}) *JobQueue {
-	return &JobQueue{Name: name, Params: params, Status: StatusActive}
+	priority := LowestPriority
+	if val, ok := JobRank[name]; ok {
+		priority = val
+	}
+	return &JobQueue{
+		Name:     name,
+		Params:   params,
+		Status:   StatusActive,
+		Priority: priority,
+	}
 }
 
 // Save writes JobQueue instance into database
@@ -155,7 +200,7 @@ func GetAll() []JobQueue {
 	var jobQueues []JobQueue
 	err := col.Find(bson.M{
 		"status": StatusActive,
-	}).Limit(JobLimit).All(&jobQueues)
+	}).Sort("priority").Limit(JobLimit).All(&jobQueues)
 	if err != nil {
 		modelLogger.Fatal("Failed to get all JobQueue", err)
 	}
@@ -213,7 +258,7 @@ func GetAllPostponed() []JobQueue {
 	err := col.Find(bson.M{
 		"status": StatusPostponed,
 		"name":   bson.M{"$nin": []interface{}{"PostMediaJob", "PostAccountJob"}},
-	}).Limit(JobLimit).All(&jobQueues)
+	}).Sort("priority").Limit(JobLimit).All(&jobQueues)
 	if err != nil {
 		modelLogger.Fatal("Failed to get all JobQueue", err)
 	}
@@ -270,7 +315,7 @@ func FindJobQueue(fr *utils.FindRequest, status JobStatus) []JobQueue {
 		"params.ig_id": bson.M{"$regex": fr.Query, "$options": "i"},
 		"status":       bson.M{"$regex": status, "$options": "i"},
 		"name":         bson.M{"$nin": []interface{}{"PostMediaJob", "PostAccountJob"}},
-	}).Sort(fr.Sort).Skip(fr.Offset).Limit(fr.Limit).All(&jqs)
+	}).Sort("priority", fr.Sort).Skip(fr.Offset).Limit(fr.Limit).All(&jqs)
 	if err == nil {
 		modelLogger.Info(fmt.Sprintf("Success to find JobQueue with query: %v", fr.Query))
 	} else {

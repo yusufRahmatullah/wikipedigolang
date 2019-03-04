@@ -21,6 +21,9 @@ var (
 )
 
 func init() {
+	// initialize and migrate JobRank
+	jobqueue.InitJobRank()
+	jobqueue.MigrateJobRank()
 	// initialilze JobAssigner
 	jobAssigner = jobqueue.NewJobAssigner()
 	singleAccountJob := igProfileJob.NewSingleAccountJob()
