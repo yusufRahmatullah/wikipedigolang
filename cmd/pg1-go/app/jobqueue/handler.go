@@ -177,7 +177,13 @@ func actionHandler(c *gin.Context) {
 
 // jobQueueIndexView render JobQueue form
 func jobQueueIndexView(c *gin.Context) {
-	c.HTML(http.StatusOK, "jobqueue.tmpl.html", nil)
+	defIgID := c.Query("ig_id")
+	data := struct {
+		DefinedIGID string
+	}{
+		DefinedIGID: defIgID,
+	}
+	c.HTML(http.StatusOK, "jobqueue.tmpl.html", data)
 }
 
 func batchAddIndexView(c *gin.Context) {
