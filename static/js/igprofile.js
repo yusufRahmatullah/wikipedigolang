@@ -9,7 +9,7 @@ function appendCards(cards) {
             <div class="section double-padded center">
                 `+card.name+`
             </div>
-            <a href="https://www.instagram.com/`+card.ig_id+`" target="_blank">
+            <a href="/igprofile/`+card.ig_id+`" target="_blank">
                 <div class="section dark center">
                     @`+card.ig_id+`
                 </div>

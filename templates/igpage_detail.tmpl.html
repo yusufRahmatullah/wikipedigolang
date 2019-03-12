@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+{{template "_head.tmpl.html" .igProfile.Name}}
+
+<body onload="reset();">
+    <div class="container">
+        <header class="sticky center">
+            <h1 id="subtitle" class="center">{{.igProfile.Name}}</h1>
+        </header>
+        <div class="row">
+            <div class="col-sm-4 col-md-3">
+                <div
+                    style="background: url({{.igProfile.PpURL}}) ; position: relative; width: 100%; padding-top: 100%; background-size: cover">
+                </div>
+            </div>
+            <div class="col-sm-8 col-md-9">
+                <p>Followers: {{.igProfile.Followers}}</p>
+                <p>Following: {{.igProfile.Following}}</p>
+                <p>Number of Posts: {{.igProfile.Posts}}</p>
+                <p>Crawled at: {{humTime .igProfile.CreatedAt}}</p>
+                <p>Last update at: {{humTime .igProfile.ModifiedAt}}</p>
+                {{if .admin}}
+                <p>Status: {{.igProfile.Status}}</p>
+                {{end}}
+            </div>
+        </div>
+        <div id="card-container" class="row">
+        </div>
+        <div class="center">
+            <div id="not-found" class="card warning double-padded" style="margin: 0 auto; visibility: hidden;">Ig Medias
+                haven't been crawled</div>
+        </div>
+        <div class="center">
+            <div class="spinner primary"></div>
+        </div>
+    </div>
+    {{template "_overlay.tmpl.html"}}
+    <script type="text/javascript" src="/static/js/main.js"></script>
+    <script type="text/javascript" src="/static/js/_overlay.js"></script>
+    {{if .admin}}
+    <script type="text/javascript" src="/static/js/ig_page_detail.js"
+        search="by_id_all?ig_id={{.igProfile.IGID}}"></script>
+    <script type="text/javascript" src="/static/js/admin_ig_page_detail.js"></script>
+    {{else}}
+    <script type="text/javascript" src="/static/js/ig_page_detail.js" search="by_id?ig_id={{.igProfile.IGID}}"></script>
+    <script type="text/javascript" src="/static/js/ig_page_detail_client.js"></script>
+    {{end}}
+</body>
+
+</html>

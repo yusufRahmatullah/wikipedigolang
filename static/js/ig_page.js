@@ -4,7 +4,7 @@ var cs = document.currentScript;
 var timeout = null;
 var optSearchParam = "";
 
-window.onscroll = function(ev) {
+window.onscroll = function (ev) {
     if ((window.innerHeight + window.pageYOffset) >= document.body.offsetHeight) {
         search();
     }
@@ -28,7 +28,7 @@ function search() {
     var order = qs('#order-by').value;
     var srchUrl = getScriptAttr('search');
     var pageCode = getScriptAttr('page');
-    var url = '/api/'+pageCode+srchUrl+'?offset='+offset+'&query='+query+'&sort='+sortBy+'&order='+order+optSearchParam;
+    var url = '/api/' + pageCode + srchUrl + '?offset=' + offset + '&query=' + query + '&sort=' + sortBy + '&order=' + order + optSearchParam;
     if (urlLocks.includes(url)) {
         return
     }
@@ -59,8 +59,8 @@ function search() {
             }
             urlLocks.length = 0;
         },
-        onErr : e => {
-            notFound(true);            
+        onErr: e => {
+            notFound(true);
         },
     });
 }
@@ -69,9 +69,9 @@ function initCount() {
     var page = getScriptAttr('page');
     var countUrl = getScriptAttr('count');
     var subtitle = getScriptAttr('subtitle');
-    apiGet('/api/'+page+countUrl, {
+    apiGet('/api/' + page + countUrl, {
         onSuc: d => {
-            qs('#subtitle').innerHTML = 'IGO '+subtitle+' <sub>('+d+' '+subtitle.toLowerCase()+')</sub>';
+            qs('#subtitle').innerHTML = 'IGO ' + subtitle + ' <sub>(' + d + ' ' + subtitle.toLowerCase() + ')</sub>';
         }
     });
 }

@@ -30,6 +30,21 @@ func findIgMediaHandler(c *gin.Context, status MediaStatus) {
 	c.JSON(http.StatusOK, data)
 }
 
+func findIgMediaByIDHandler(c *gin.Context, status MediaStatus) {
+	fr := utils.GetFindRequest(c)
+	igID := c.Query("ig_id")
+	igms := findIgMediaByID(igID, fr, status)
+	compData := struct {
+		Medias []IgMedia `json:"medias"`
+		IGID   string    `json:"query"`
+	}{
+		Medias: igms,
+		IGID:   fr.Query,
+	}
+	data := base.StandardJSON("", compData)
+	c.JSON(http.StatusOK, data)
+}
+
 func updateStatusHandler(c *gin.Context) {
 	jd := struct {
 		ID     string `json:"id"`

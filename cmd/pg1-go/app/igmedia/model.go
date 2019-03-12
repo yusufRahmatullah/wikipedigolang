@@ -85,6 +85,21 @@ func FindIgMedia(fr *utils.FindRequest, status MediaStatus) []IgMedia {
 	return igms
 }
 
+func findIgMediaByID(igID string, fr *utils.FindRequest, status MediaStatus) []IgMedia {
+	dataAccess := base.NewDataAccess()
+	defer dataAccess.Close()
+	col := dataAccess.GetCollection(igMediaCol)
+	var igms []IgMedia
+	err := col.Find(bson.M{
+		"ig_id":  igID,
+		"status": bson.M{"$regex": status, "$options": "i"},
+	}).Sort(fr.Sort).Skip(fr.Offset).Limit(fr.Limit).All(&igms)
+	if err != nil {
+		modelLogger.Fatal(fmt.Sprintf("Failed to find IgMedia with igID: %v", fr.Query), err)
+	}
+	return igms
+}
+
 func countIgMedia(status MediaStatus) (int, error) {
 	dataAccess := base.NewDataAccess()
 	defer dataAccess.Close()

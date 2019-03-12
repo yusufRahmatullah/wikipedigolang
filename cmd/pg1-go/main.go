@@ -4,6 +4,7 @@ import (
 	"html/template"
 	"os"
 	"strings"
+	"time"
 
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/igmedia"
 
@@ -33,6 +34,10 @@ func inc(num int) int {
 
 func humInt(num int) string {
 	return humanize.Comma(int64(num))
+}
+
+func humTime(time time.Time) string {
+	return humanize.Time(time)
 }
 
 func ginMode() string {
@@ -85,6 +90,7 @@ func main() {
 		"decrease": dec,
 		"increase": inc,
 		"humInt":   humInt,
+		"humTime":  humTime,
 		"ginMode":  ginMode,
 	})
 	router.LoadHTMLGlob("templates/*.tmpl.html")

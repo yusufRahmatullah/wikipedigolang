@@ -62,11 +62,10 @@ func MigrateJobRank() {
 	defer dataAccess.Close()
 	col := dataAccess.GetCollection(jobQueueCol)
 	for name, val := range JobRank {
-		ci, err := col.UpdateAll(
+		_, err := col.UpdateAll(
 			bson.M{"name": name, "status": bson.M{"$ne": "finished"}},
 			bson.M{"$set": bson.M{"priority": val}},
 		)
-		modelLogger.Debug(fmt.Sprintf("==debug== %v\n", ci))
 		if err != nil {
 			modelLogger.Fatal("Failed to migrate JobRank", err)
 		}

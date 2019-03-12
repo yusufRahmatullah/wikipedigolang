@@ -259,3 +259,16 @@ func igProfilesView(c *gin.Context, admin bool) {
 		},
 	})
 }
+
+func igProfileView(c *gin.Context, admin bool) {
+	igID := c.Param("ig_id")
+	igp := GetIgProfile(igID)
+	if igp.IGID != "" && igp.IGID == igID {
+		c.HTML(http.StatusOK, "igpage_detail.tmpl.html", gin.H{
+			"admin":     admin,
+			"igProfile": igp,
+		})
+	} else {
+		c.Redirect(http.StatusTemporaryRedirect, "/")
+	}
+}

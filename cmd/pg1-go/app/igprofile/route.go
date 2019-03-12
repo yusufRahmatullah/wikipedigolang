@@ -41,12 +41,18 @@ func DefineViewRoutes(router *gin.Engine, prefix string) {
 	router.GET(prefix+"/igprofiles", func(c *gin.Context) {
 		c.Redirect(http.StatusPermanentRedirect, "/")
 	})
+	router.GET(prefix+"/igprofile/:ig_id", func(c *gin.Context) {
+		igProfileView(c, false)
+	})
 
 	adminPage := router.Group("/admin")
 	adminPage.Use(auth.RequiredAdmin())
 	{
 		adminPage.GET("/igprofiles", func(c *gin.Context) {
 			igProfilesView(c, true)
+		})
+		adminPage.GET("/igprofile/:ig_id", func(c *gin.Context) {
+			igProfileView(c, true)
 		})
 	}
 }
