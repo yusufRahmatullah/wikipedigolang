@@ -10,9 +10,16 @@ import (
 	"git.heroku.com/pg1-go-work/cmd/pg1-go/app/logger"
 )
 
-const avaJobCol = "available_jobs"
+const (
+	avaJobCol = "available_jobs"
+)
 
-var assignerLogger = logger.NewLogger("JobAssigner", true, true)
+var (
+	assignerLogger = logger.NewLogger("JobAssigner", true, true)
+	skippedErr     = [...]string{
+		"Post ID not exist",
+	}
+)
 
 func init() {
 	dataAccess := base.NewDataAccess()
@@ -83,6 +90,15 @@ func (ja *JobAssigner) Register(proc Job) {
 	}
 }
 
+func isErrSkipped(err string) bool {
+	for _, e := range skippedErr {
+		if e == err {
+			return true
+		}
+	}
+	return false
+}
+
 // ProcessJobQueue process JobQueue by assign it into
 // corresponding registered Processor
 // Returns true if JobQueue processed successfully
@@ -93,7 +109,7 @@ func (ja *JobAssigner) ProcessJobQueue(jobQueue *JobQueue) bool {
 	errMsg := ""
 	if exist {
 		errMsg = proc.Process(jobQueue)
-		if errMsg == "" {
+		if errMsg == "" || isErrSkipped(errMsg) {
 			assignerLogger.Info(fmt.Sprintf("Success to process %v", name))
 			return DeleteJobQueue(jobQueue)
 		}

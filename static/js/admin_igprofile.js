@@ -24,7 +24,7 @@ function toggleAction(igid, id, act) {
     } else if (act == 'asMulti') {
         status = 'multi';
     } else if (act == 'update') {
-        window.location.reload(true);
+        alert(igid+' Updated');
         return
     }
     bg.innerHTML = generateButtonsText(status, igid, id);
