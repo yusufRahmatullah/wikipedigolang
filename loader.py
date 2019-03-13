@@ -211,12 +211,15 @@ def post_account_job(jq):
 
 
 def process_job(jq):
-    if not jq['params']['ig_id']:
-        return
-    if jq['name'] == 'PostMediaJob':
-        post_media_job(jq)
-    elif jq['name'] == 'PostAccountJob':
-        post_account_job(jq)
+    if jq['params']['ig_id']:
+        try:
+            if jq['name'] == 'PostMediaJob':
+                post_media_job(jq)
+            elif jq['name'] == 'PostAccountJob':
+                post_account_job(jq)
+        except TypeError:
+            # Caused by empty js data
+            pass
     col = db['job_queue']
     try:
         col.delete_one({'_id': jq['_id']})
